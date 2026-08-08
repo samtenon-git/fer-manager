@@ -1,0 +1,15 @@
+version: '3.8'
+
+services:
+  app:
+    build: ./backend
+    container_name: fer-manager
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./data:/app/data
+      - ./frontend:/app/frontend
+    environment:
+      - FLASK_ENV=development
+      - DATABASE_PATH=/app/data/fer.db
+    restart: unless-stopped

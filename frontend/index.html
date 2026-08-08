@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>إدارة الحديد</title>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<link rel="stylesheet" href="/style.css">
+</head>
+<body class="rtl">
+
+<aside id="sidebar">
+  <div id="sidebar-logo">
+    <h1>🔩 <span id="s-title">إدارة الحديد</span></h1>
+    <p>طرطوس – سوريا</p>
+  </div>
+  <nav id="sidenav">
+    <a id="nav-dashboard"    onclick="goTo('dashboard')"><span class="nav-icon">📊</span><span id="nl-dashboard"></span></a>
+    <a id="nav-factures"     onclick="goTo('factures')"><span class="nav-icon">📄</span><span id="nl-factures"></span></a>
+    <a id="nav-achats"       onclick="goTo('achats')"><span class="nav-icon">📥</span><span id="nl-achats"></span></a>
+    <a id="nav-clients"      onclick="goTo('clients')"><span class="nav-icon">👥</span><span id="nl-clients"></span></a>
+    <a id="nav-fournisseurs" onclick="goTo('fournisseurs')"><span class="nav-icon">🚚</span><span id="nl-fournisseurs"></span></a>
+    <a id="nav-produits"     onclick="goTo('produits')"><span class="nav-icon">📦</span><span id="nl-produits"></span></a>
+    <a id="nav-prix"         onclick="goTo('prix')"><span class="nav-icon">📈</span><span id="nl-prix"></span></a>
+    <a id="nav-taux"         onclick="goTo('taux')"><span class="nav-icon">💵</span><span id="nl-taux"></span></a>
+    <a id="nav-inventaire"   onclick="goTo('inventaire')"><span class="nav-icon">🏗️</span><span id="nl-inventaire"></span></a>
+    <a id="nav-operations"   onclick="goTo('operations')"><span class="nav-icon">⚙️</span><span id="nl-operations"></span></a>
+    <a id="nav-caisse"       onclick="goTo('caisse')"><span class="nav-icon">🧾</span><span id="nl-caisse"></span></a>
+    <a id="nav-backup"       onclick="goTo('backup')"><span class="nav-icon">💾</span><span id="nl-backup"></span></a>
+  </nav>
+  <div class="lang-switcher">
+    <button class="lang-btn" id="lb-ar" onclick="setLang('ar')">العربية</button>
+    <button class="lang-btn" id="lb-fr" onclick="setLang('fr')">Français</button>
+    <button class="lang-btn" id="lb-en" onclick="setLang('en')">EN</button>
+  </div>
+</aside>
+
+<div id="main">
+  <header id="topbar">
+    <h2 id="page-title">لوحة التحكم</h2>
+    <div class="prix-badge" id="prix-topbar">...</div>
+  </header>
+  <div id="content">
+    <div class="empty-state"><div class="empty-icon">⏳</div><p>جار التحميل...</p></div>
+  </div>
+</div>
+
+<div id="toast"></div>
+<div id="modal-overlay" style="display:none" class="modal-overlay" onclick="closeModal(event)">
+  <div class="modal" id="modal-box">
+    <div class="modal-header">
+      <h3 id="modal-title">—</h3>
+      <button class="modal-close" onclick="closeModalDirect()">✕</button>
+    </div>
+    <div class="modal-body" id="modal-body"></div>
+    <div class="modal-footer" id="modal-footer"></div>
+  </div>
+</div>
+
+<script src="/app.js"></script>
+</body>
+</html>
