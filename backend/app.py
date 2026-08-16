@@ -1,6 +1,13 @@
 import sys
 import os
 
+def safe_pause():
+    """Pause interactive seulement si un vrai terminal est disponible (pas en Docker)."""
+    try:
+        input("Appuyez sur Entree pour fermer...")
+    except EOFError:
+        pass
+
 print("=" * 50)
 print("  DEMARRAGE DE L'APPLICATION FER-MANAGER")
 print("=" * 50)
@@ -11,23 +18,31 @@ try:
 except ImportError as e:
     print(f"ERREUR: Un module Python manque : {e}")
     print("Lancez : python -m pip install flask flask-cors python-dateutil")
-    input("Appuyez sur Entree pour fermer...")
+    safe_pause()
     sys.exit(1)
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-FRONTEND_DIR = os.path.abspath(os.path.join(BASE_DIR, '..', 'frontend'))
+
+# Cherche le frontend a plusieurs emplacements possibles :
+# - Docker : /app/frontend (car app.py est copie a la racine /app)
+# - Local  : ../frontend (car app.py est dans backend/)
+_candidates = [
+    os.path.join(BASE_DIR, 'frontend'),
+    os.path.abspath(os.path.join(BASE_DIR, '..', 'frontend')),
+]
+FRONTEND_DIR = next((p for p in _candidates if os.path.exists(os.path.join(p, 'index.html'))), _candidates[-1])
 
 print(f"[OK] Dossier backend  : {BASE_DIR}")
 print(f"[OK] Dossier frontend : {FRONTEND_DIR}")
 
 if not os.path.exists(FRONTEND_DIR):
     print(f"ERREUR: Le dossier frontend n'existe pas : {FRONTEND_DIR}")
-    input("Appuyez sur Entree pour fermer...")
+    safe_pause()
     sys.exit(1)
 
 if not os.path.exists(os.path.join(FRONTEND_DIR, 'index.html')):
     print(f"ERREUR: index.html introuvable dans {FRONTEND_DIR}")
-    input("Appuyez sur Entree pour fermer...")
+    safe_pause()
     sys.exit(1)
 
 app = Flask(__name__)
@@ -40,7 +55,7 @@ except Exception as e:
     print(f"ERREUR lors du chargement de routes/api.py : {e}")
     import traceback
     traceback.print_exc()
-    input("Appuyez sur Entree pour fermer...")
+    safe_pause()
     sys.exit(1)
 
 try:
@@ -50,7 +65,7 @@ except Exception as e:
     print(f"ERREUR lors du chargement de routes/pdf.py : {e}")
     import traceback
     traceback.print_exc()
-    input("Appuyez sur Entree pour fermer...")
+    safe_pause()
     sys.exit(1)
 
 app.register_blueprint(api, url_prefix='/api')
@@ -74,7 +89,7 @@ except Exception as e:
     print(f"ERREUR lors du chargement de database.py : {e}")
     import traceback
     traceback.print_exc()
-    input("Appuyez sur Entree pour fermer...")
+    safe_pause()
     sys.exit(1)
 
 with app.app_context():
@@ -95,7 +110,7 @@ with app.app_context():
         print(f"ERREUR lors de l'initialisation de la base de donnees : {e}")
         import traceback
         traceback.print_exc()
-        input("Appuyez sur Entree pour fermer...")
+        safe_pause()
         sys.exit(1)
 
 print("=" * 50)
@@ -111,5 +126,5 @@ if __name__ == '__main__':
         print(f"ERREUR au demarrage du serveur : {e}")
         import traceback
         traceback.print_exc()
-        input("Appuyez sur Entree pour fermer...")
+        safe_pause()
         sys.exit(1)
