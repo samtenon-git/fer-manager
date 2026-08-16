@@ -21,7 +21,6 @@ if errorlevel 1 (
 )
 echo.
 
-REM --- Nettoyage dossier fantome (les deux modes) ---
 if exist "{backend" rmdir /s /q "{backend"
 
 REM ============================================
@@ -29,15 +28,32 @@ REM   MODE DOCKER
 REM ============================================
 if "%MODE%"=="docker" (
     echo [2/2] Lancement via Docker...
-    docker compose up --build -d
+
+    REM Verifie si l'image existe deja pour eviter un rebuild systematique
+    docker images fer-manager-app --format "{{.Repository}}" 2>nul | findstr "fer-manager-app" >nul
+    if errorlevel 1 (
+        echo    Premiere construction de l'image, cela peut prendre du temps...
+        docker compose up --build -d
+    ) else (
+        echo    Image existante detectee, demarrage rapide ^(sans reconstruction^)...
+        docker compose up -d
+        if errorlevel 1 (
+            echo    Echec, tentative avec reconstruction complete...
+            docker compose up --build -d
+        )
+    )
+
     if errorlevel 1 (
         echo    ERREUR Docker. Tentative en mode Python...
         goto :python_mode
     )
+
     echo.
     echo ================================================
     echo   OK ! Application lancee via Docker.
     echo   http://localhost:5000
+    echo   Astuce : pour forcer une reconstruction complete,
+    echo   utilisez rebuild.bat
     echo ================================================
     timeout /t 3 >nul
     start http://localhost:5000
@@ -52,33 +68,24 @@ echo [2/2] Lancement via Python...
 
 python --version >nul 2>&1
 if errorlevel 1 (
-    echo    Python n'est pas installe. Installation automatique...
-    winget install --id Python.Python.3.12 --silent --accept-package-agreements --accept-source-agreements
+    echo    Python n'est pas installe sur ce PC.
+    echo    Lancement de install-prerequis.bat pour l'installer...
     echo.
-    echo    ================================================
-    echo    Python a ete installe.
-    echo    IMPORTANT : fermez cette fenetre et relancez
-    echo    smart-start.bat une nouvelle fois.
-    echo    ================================================
+    call "%~dp0install-prerequis.bat"
+    echo.
+    echo    Relancez smart-start.bat maintenant que Python est pret.
     pause
     exit /b 0
 )
 
 if not exist "data" mkdir data
-
-python -m pip install --quiet --upgrade pip
-cd backend
-python -m pip install --quiet flask flask-cors python-dateutil
-python -m pip install --quiet weasyprint >nul 2>&1
-cd ..
-
 set DATABASE_PATH=%~dp0data\fer.db
 start /min cmd /c "cd /d %~dp0backend && set DATABASE_PATH=%~dp0data\fer.db && python app.py >> %~dp0logs.txt 2>&1"
 
 echo.
 echo ================================================
 echo   OK ! Application lancee via Python (arriere-plan).
-echo   Logs : %~dp0logs.txt
+echo   Logs : %~dp0logs.txt  ^(ou lancez logs.bat^)
 echo   http://localhost:5000
 echo ================================================
 timeout /t 3 >nul
