@@ -18,30 +18,30 @@ TEMPLATE = """
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap');
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: 'Cairo', Arial, sans-serif; font-size: 13px; color: #1c2226; direction: rtl; }
+  body { font-family: 'Cairo', Arial, sans-serif; font-size: 13px; color: #201a17; direction: rtl; }
   .page { padding: 30px 35px; }
-  .header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 3px solid #1a6b74; padding-bottom: 20px; margin-bottom: 24px; }
-  .logo-area h1 { font-size: 22px; font-weight: 900; color: #1a6b74; }
-  .logo-area p { color: #5a6a72; font-size: 11px; margin-top: 4px; }
+  .header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 3px solid #b14a24; padding-bottom: 20px; margin-bottom: 24px; }
+  .logo-area h1 { font-size: 22px; font-weight: 900; color: #2b2420; }
+  .logo-area p { color: #7a6f65; font-size: 11px; margin-top: 4px; }
   .fac-meta { text-align: left; }
-  .fac-num { font-size: 18px; font-weight: 700; color: #1a6b74; }
-  .fac-date { color: #5a6a72; font-size: 11px; margin-top: 4px; }
-  .badge { display: inline-block; background: #22909c; color: white; padding: 2px 10px; border-radius: 12px; font-size: 10px; margin-top: 6px; }
-  .badge.validee { background: #27ae60; }
-  .client-box { background: #f5f0e8; border-right: 4px solid #1a6b74; padding: 12px 16px; border-radius: 6px; margin-bottom: 20px; }
-  .client-box .label { font-size: 10px; color: #5a6a72; font-weight: 700; text-transform: uppercase; margin-bottom: 4px; }
+  .fac-num { font-size: 18px; font-weight: 700; color: #b14a24; }
+  .fac-date { color: #7a6f65; font-size: 11px; margin-top: 4px; }
+  .badge { display: inline-block; background: #c65d2e; color: white; padding: 2px 10px; border-radius: 12px; font-size: 10px; margin-top: 6px; }
+  .badge.validee { background: #2f8f5b; }
+  .client-box { background: #f6f1ea; border-right: 4px solid #b14a24; padding: 12px 16px; border-radius: 6px; margin-bottom: 20px; }
+  .client-box .label { font-size: 10px; color: #7a6f65; font-weight: 700; text-transform: uppercase; margin-bottom: 4px; }
   .client-box .nom { font-size: 15px; font-weight: 700; }
-  .client-box .detail { font-size: 11px; color: #5a6a72; margin-top: 2px; }
-  .prix-fer-banner { background: #e8f4f5; border: 1px solid #1a6b74; border-radius: 6px; padding: 8px 16px; margin-bottom: 20px; font-size: 12px; color: #1a6b74; }
+  .client-box .detail { font-size: 11px; color: #7a6f65; margin-top: 2px; }
+  .taux-banner { background: #eef2f5; border: 1px solid #2c6f8a; border-radius: 6px; padding: 8px 16px; margin-bottom: 20px; font-size: 12px; color: #235870; }
   table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
-  table th { background: #1a6b74; color: white; padding: 9px 12px; font-size: 11px; font-weight: 700; text-align: right; }
-  table td { padding: 8px 12px; border-bottom: 1px solid #ece8df; font-size: 12px; }
+  table th { background: #2b2420; color: white; padding: 9px 12px; font-size: 11px; font-weight: 700; text-align: right; }
+  table td { padding: 8px 12px; border-bottom: 1px solid #ece5db; font-size: 12px; }
   table tr:nth-child(even) td { background: #faf8f4; }
-  .section-title { font-size: 12px; font-weight: 700; color: #1a6b74; margin: 16px 0 8px; border-bottom: 1px solid #e0ece9; padding-bottom: 4px; }
+  .section-title { font-size: 12px; font-weight: 700; color: #b14a24; margin: 16px 0 8px; border-bottom: 1px solid #ece5db; padding-bottom: 4px; }
   .totals { margin-right: auto; margin-left: 0; width: 280px; }
   .totals table td { border-bottom: none; }
-  .totals .grand-total td { background: #1a6b74 !important; color: white; font-weight: 700; font-size: 14px; }
-  .footer { margin-top: 40px; border-top: 1px solid #ddd; padding-top: 14px; text-align: center; color: #5a6a72; font-size: 10px; }
+  .totals .grand-total td { background: #2b2420 !important; color: white; font-weight: 700; font-size: 14px; }
+  .footer { margin-top: 40px; border-top: 1px solid #ddd; padding-top: 14px; text-align: center; color: #7a6f65; font-size: 10px; }
 </style>
 </head>
 <body>
@@ -65,10 +65,11 @@ TEMPLATE = """
     {% if facture.client_adresse %}<div class="detail">📍 {{ facture.client_adresse }}</div>{% endif %}
   </div>
   {% endif %}
-  <div class="prix-fer-banner">
-    سعر الحديد المرجعي: <strong>{{ "{:,.0f}".format(facture.prix_fer_jour) }} ل.س / كغ</strong>
-    {% if facture.devise == 'USD' %} · سعر الصرف: <strong>{{ "{:,.0f}".format(facture.taux_change) }} ل.س = 1$</strong>{% endif %}
+  {% if facture.devise == 'USD' %}
+  <div class="taux-banner">
+    سعر الصرف عند البيع: <strong>{{ "{:,.0f}".format(facture.taux_change) }} ل.س = 1$</strong>
   </div>
+  {% endif %}
   {% if lignes %}
   <div class="section-title">📦 المواد والحديد</div>
   <table>

@@ -2,18 +2,28 @@
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>إدارة الحديد</title>
-<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <link rel="stylesheet" href="/style.css">
 </head>
 <body class="rtl">
 
+<div id="sidebar-overlay" onclick="closeSidebar()"></div>
+
 <aside id="sidebar">
   <div id="sidebar-logo">
-    <h1>🔩 <span id="s-title">إدارة الحديد</span></h1>
-    <p>طرطوس – سوريا</p>
+    <h1><span class="logo-icon">🔩</span> <span id="s-title">إدارة الحديد</span></h1>
+    <button id="sidebar-close" onclick="closeSidebar()">✕</button>
+  </div>
+  <div class="lang-switcher">
+    <button class="lang-btn" id="lb-ar" onclick="setLang('ar')" title="العربية">🇸🇾</button>
+    <button class="lang-btn" id="lb-fr" onclick="setLang('fr')" title="Français">🇫🇷</button>
+    <button class="lang-btn" id="lb-en" onclick="setLang('en')" title="English">🇬🇧</button>
   </div>
   <nav id="sidenav">
     <a id="nav-dashboard"    onclick="goTo('dashboard')"><span class="nav-icon">📊</span><span id="nl-dashboard"></span></a>
@@ -22,22 +32,18 @@
     <a id="nav-clients"      onclick="goTo('clients')"><span class="nav-icon">👥</span><span id="nl-clients"></span></a>
     <a id="nav-fournisseurs" onclick="goTo('fournisseurs')"><span class="nav-icon">🚚</span><span id="nl-fournisseurs"></span></a>
     <a id="nav-produits"     onclick="goTo('produits')"><span class="nav-icon">📦</span><span id="nl-produits"></span></a>
-    <a id="nav-prix"         onclick="goTo('prix')"><span class="nav-icon">📈</span><span id="nl-prix"></span></a>
     <a id="nav-taux"         onclick="goTo('taux')"><span class="nav-icon">💵</span><span id="nl-taux"></span></a>
     <a id="nav-inventaire"   onclick="goTo('inventaire')"><span class="nav-icon">🏗️</span><span id="nl-inventaire"></span></a>
     <a id="nav-operations"   onclick="goTo('operations')"><span class="nav-icon">⚙️</span><span id="nl-operations"></span></a>
     <a id="nav-caisse"       onclick="goTo('caisse')"><span class="nav-icon">🧾</span><span id="nl-caisse"></span></a>
-    <a id="nav-backup"       onclick="goTo('backup')"><span class="nav-icon">💾</span><span id="nl-backup"></span></a>
+    <a id="nav-settings"      onclick="goTo('settings')"><span class="nav-icon">⚙️</span><span id="nl-settings"></span></a>
+    <a id="nav-magasin"      onclick="goTo('magasin')"><span class="nav-icon">🏪</span><span id="nl-magasin"></span></a>
   </nav>
-  <div class="lang-switcher">
-    <button class="lang-btn" id="lb-ar" onclick="setLang('ar')">العربية</button>
-    <button class="lang-btn" id="lb-fr" onclick="setLang('fr')">Français</button>
-    <button class="lang-btn" id="lb-en" onclick="setLang('en')">EN</button>
-  </div>
 </aside>
 
 <div id="main">
   <header id="topbar">
+    <button id="menu-toggle" onclick="openSidebar()">☰</button>
     <h2 id="page-title">لوحة التحكم</h2>
     <div class="prix-badge" id="prix-topbar">...</div>
   </header>

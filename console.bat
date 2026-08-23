@@ -7,12 +7,12 @@ echo   Gestion Fer - Console
 echo   Dossier : C:\fer-manager
 echo ================================================
 echo.
+echo   git pull                 -^> recuperer les dernieres modifs
 echo   .\smart-start.bat        -^> demarrer l'application
 echo   .\stop.bat               -^> arreter l'application
 echo   .\logs.bat               -^> voir les logs en direct
 echo   .\rebuild.bat            -^> reconstruire Docker (apres pull)
 echo   .\install-prerequis.bat  -^> installer Python/dependances
-echo   git pull                 -^> recuperer les dernieres modifs
 echo.
 
 powershell -NoExit -Command "cd 'C:\fer-manager'"
