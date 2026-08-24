@@ -30,6 +30,17 @@ def init_db():
         created_at TEXT DEFAULT (datetime('now'))
     );
 
+    -- Categories de produits : modifiables par l'utilisateur (avant, une liste
+    -- figee dans le code). 'cle' est la valeur stockee dans produits.categorie.
+    CREATE TABLE IF NOT EXISTS categories (
+        cle TEXT PRIMARY KEY,
+        nom_fr TEXT NOT NULL,
+        nom_ar TEXT NOT NULL,
+        nom_en TEXT,
+        icon TEXT DEFAULT '📦',
+        ordre INTEGER DEFAULT 0
+    );
+
     -- Reglages globaux du programme
     CREATE TABLE IF NOT EXISTS settings (
         cle TEXT PRIMARY KEY,
@@ -254,7 +265,39 @@ def init_db():
     else:
         _migrate_if_needed(conn, c)
 
+    _seed_default_categories(conn, c)
+
     conn.close()
+
+
+def _seed_default_categories(conn, c):
+    """Categories par defaut : inseree une seule fois (INSERT OR IGNORE), que la
+    base soit neuve ou tres ancienne. L'utilisateur peut ensuite les modifier
+    ou en ajouter d'autres depuis la page Produits - elles ne sont plus figees
+    dans le code."""
+    # Migration douce : colonne nom_en ajoutee apres coup sur une base existante
+    cols_cat = [r[1] for r in c.execute("PRAGMA table_info(categories)").fetchall()]
+    if 'nom_en' not in cols_cat:
+        try:
+            c.execute("ALTER TABLE categories ADD COLUMN nom_en TEXT")
+            conn.commit()
+        except Exception as e:
+            print(f"Migration categories.nom_en: {e}")
+
+    categories_defaut = [
+        ('rond_beton', 'Rond à béton',  'حديد مسلح', 'Rebar',    '🔩', 1),
+        ('tube',       'Tube',          'أنبوب',     'Tube',     '▭', 2),
+        ('plat',       'Plat',          'حديد مسطح', 'Flat bar', '▬', 3),
+        ('corniere',   'Cornière',      'زاوية',     'Angle',    '📐', 4),
+        ('profile',    'Profilé',       'بروفيل',    'Profile',  '⌶', 5),
+        ('treillis',   'Treillis',      'شبكة',      'Mesh',     '▦', 6),
+    ]
+    for cle, nom_fr, nom_ar, nom_en, icon, ordre in categories_defaut:
+        c.execute(
+            "INSERT OR IGNORE INTO categories (cle, nom_fr, nom_ar, nom_en, icon, ordre) VALUES (?,?,?,?,?,?)",
+            (cle, nom_fr, nom_ar, nom_en, icon, ordre)
+        )
+    conn.commit()
 
 
 def _migrate_if_needed(conn, c):

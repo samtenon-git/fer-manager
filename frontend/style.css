@@ -169,6 +169,13 @@ div[style*="overflow-x:auto"]{-webkit-overflow-scrolling:touch;}
 .modal{background:white; border-radius:14px; width:100%; max-width:480px; max-height:90vh; overflow-y:auto; box-shadow:var(--shadow-lg);}
 .modal.modal-wide{max-width:640px;}
 .tiles-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(130px,1fr)); gap:10px;}
+.icon-choice-btn{
+  font-size:1.3rem; padding:8px 0; border:2px solid var(--border); border-radius:8px;
+  background:white; cursor:pointer; transition:all .15s; font-family:inherit;
+}
+.icon-choice-btn:hover{border-color:var(--sea-lt); background:#fdf6f2;}
+.icon-choice-btn.active{border-color:var(--sea); background:#fdf6f2; box-shadow:0 0 0 2px rgba(193,82,42,.15);}
+
 .tile-btn{
   background:white; border:2px solid var(--border); border-radius:10px;
   padding:14px 10px; text-align:center; cursor:pointer;

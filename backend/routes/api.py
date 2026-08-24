@@ -37,6 +37,76 @@ def set_taux_change():
     return jsonify({'ok': True})
 
 # ══════════════════════════════════════════════
+#  CATEGORIES DE PRODUITS
+# ══════════════════════════════════════════════
+
+@api.route('/categories', methods=['GET'])
+def get_categories():
+    db = get_db()
+    rows = db.execute("SELECT * FROM categories ORDER BY ordre, nom_fr").fetchall()
+    db.close()
+    return jsonify([dict(r) for r in rows])
+
+@api.route('/categories', methods=['POST'])
+def create_categorie():
+    data = request.json
+    nom_fr = (data.get('nom_fr') or '').strip()
+    nom_ar = (data.get('nom_ar') or '').strip()
+    nom_en = (data.get('nom_en') or '').strip()
+    if not nom_fr and not nom_ar:
+        return jsonify({'error': 'Le nom (français ou arabe) est requis.'}), 400
+
+    # Cle technique generee depuis le nom (slug), utilisee comme identifiant
+    # stable pour produits.categorie - jamais montree a l'utilisateur.
+    import re, unicodedata
+    base = nom_fr or nom_ar
+    slug = unicodedata.normalize('NFKD', base).encode('ascii', 'ignore').decode('ascii')
+    slug = re.sub(r'[^a-zA-Z0-9]+', '_', slug).strip('_').lower() or 'categorie'
+
+    db = get_db()
+    cle = slug
+    n = 2
+    while db.execute("SELECT 1 FROM categories WHERE cle=?", (cle,)).fetchone():
+        cle = f"{slug}_{n}"; n += 1
+
+    ordre_max = db.execute("SELECT COALESCE(MAX(ordre),0) FROM categories").fetchone()[0]
+    db.execute(
+        "INSERT INTO categories (cle, nom_fr, nom_ar, nom_en, icon, ordre) VALUES (?,?,?,?,?,?)",
+        (cle, nom_fr or nom_ar, nom_ar or nom_fr, nom_en or nom_fr or nom_ar, data.get('icon') or '📦', ordre_max + 1)
+    )
+    db.commit(); db.close()
+    return jsonify({'ok': True, 'cle': cle})
+
+@api.route('/categories/<cle>', methods=['PUT'])
+def update_categorie(cle):
+    data = request.json
+    db = get_db()
+    existe = db.execute("SELECT 1 FROM categories WHERE cle=?", (cle,)).fetchone()
+    if not existe:
+        db.close()
+        return jsonify({'error': 'Catégorie introuvable'}), 404
+    db.execute(
+        "UPDATE categories SET nom_fr=?, nom_ar=?, nom_en=?, icon=? WHERE cle=?",
+        (data.get('nom_fr',''), data.get('nom_ar',''), data.get('nom_en',''), data.get('icon') or '📦', cle)
+    )
+    db.commit(); db.close()
+    return jsonify({'ok': True})
+
+@api.route('/categories/<cle>', methods=['DELETE'])
+def delete_categorie(cle):
+    db = get_db()
+    nb_produits = db.execute("SELECT COUNT(*) FROM produits WHERE categorie=? AND actif=1", (cle,)).fetchone()[0]
+    if nb_produits > 0:
+        db.close()
+        return jsonify({
+            'error': f"Impossible de supprimer : {nb_produits} produit(s) utilisent encore cette catégorie. "
+                     f"Changez d'abord leur catégorie."
+        }), 400
+    db.execute("DELETE FROM categories WHERE cle=?", (cle,))
+    db.commit(); db.close()
+    return jsonify({'ok': True})
+
+# ══════════════════════════════════════════════
 #  PRODUITS
 # ══════════════════════════════════════════════
 
@@ -1100,9 +1170,25 @@ def import_demo():
     db.commit()
 
     c = db.cursor()
-    _seed_demo(db, c, scenario=scenario)
+    try:
+        _seed_demo(db, c, scenario=scenario)
+    except Exception as e:
+        # La base a deja ete videe a ce stade (commit juste au-dessus) : si le
+        # remplissage de la demo echoue en cours de route, il ne faut jamais
+        # repondre "ok" alors que la base est restee vide ou a moitie remplie.
+        # L'erreur reelle remonte ici pour etre visible (voir aussi le
+        # gestionnaire d'erreur global dans app.py).
+        db.close()
+        import traceback
+        traceback.print_exc()
+        return jsonify({
+            'error': f"Le nettoyage a reussi mais le remplissage de la démo a échoué : {e}. "
+                     f"La base est actuellement vide. Utilisez 'Restaurer une sauvegarde' si vous en aviez fait une."
+        }), 500
+
+    nb_factures = db.execute("SELECT COUNT(*) FROM factures").fetchone()[0]
     db.close()
-    return jsonify({'ok': True, 'scenario': scenario})
+    return jsonify({'ok': True, 'scenario': scenario, 'nb_factures': nb_factures})
 
 # ══════════════════════════════════════════════
 #  CAISSE (rapport encaissements / decaissements par devise)
@@ -1155,6 +1241,16 @@ def export_catalogue_magasin():
     produits = db.execute(
         "SELECT id, nom_fr, nom_ar, categorie, dimension, unite, prix_vente_kg FROM produits WHERE actif=1"
     ).fetchall()
+    categories = {c['cle']: dict(c) for c in db.execute("SELECT * FROM categories").fetchall()}
+    produits_enrichis = []
+    for p in produits:
+        pd = dict(p)
+        cat = categories.get(p['categorie'])
+        pd['categorie_nom_fr'] = cat['nom_fr'] if cat else pd['categorie']
+        pd['categorie_nom_ar'] = cat['nom_ar'] if cat else pd['categorie']
+        pd['categorie_nom_en'] = (cat['nom_en'] if cat else '') or pd['categorie']
+        pd['categorie_icon'] = cat['icon'] if cat else '📦'
+        produits_enrichis.append(pd)
     clients = db.execute(
         "SELECT id, nom, telephone FROM clients ORDER BY nom"
     ).fetchall()
@@ -1174,7 +1270,7 @@ def export_catalogue_magasin():
 
     db.close()
     return jsonify({
-        'produits': [dict(p) for p in produits],
+        'produits': produits_enrichis,
         'clients': [dict(c) for c in clients],
         'types_lignes_libres': [dict(t) for t in types_ll],
         'taux_change_jour': taux,
@@ -1303,12 +1399,16 @@ def get_dashboard():
     db = get_db()
     today = date.today().isoformat()
 
-    ca_jour = db.execute(
-        "SELECT COALESCE(SUM(total),0) FROM factures WHERE date_facture=? AND statut='validee' AND devise='LS'", (today,)
+    # IMPORTANT : on agrege sur montant_du_usd (le montant fixe en USD, calcule
+    # pour CHAQUE facture quelle que soit sa devise - voir _recalc_facture) et
+    # non plus sur 'total' filtre par devise='LS', qui excluait silencieusement
+    # toutes les ventes en USD des chiffres du tableau de bord.
+    ca_jour_usd = db.execute(
+        "SELECT COALESCE(SUM(montant_du_usd),0) FROM factures WHERE date_facture=? AND statut='validee'", (today,)
     ).fetchone()[0]
     mois = today[:7]
-    ca_mois = db.execute(
-        "SELECT COALESCE(SUM(total),0) FROM factures WHERE date_facture LIKE ? AND statut='validee' AND devise='LS'", (f"{mois}%",)
+    ca_mois_usd = db.execute(
+        "SELECT COALESCE(SUM(montant_du_usd),0) FROM factures WHERE date_facture LIKE ? AND statut='validee'", (f"{mois}%",)
     ).fetchone()[0]
     nb_factures = db.execute(
         "SELECT COUNT(*) FROM factures WHERE date_facture LIKE ? AND statut='validee'", (f"{mois}%",)
@@ -1323,16 +1423,16 @@ def get_dashboard():
     ).fetchall()
 
     ca_par_mois = db.execute(
-        """SELECT substr(date_facture,1,7) as mois, SUM(total) as ca FROM factures
-           WHERE statut='validee' AND devise='LS' GROUP BY mois ORDER BY mois DESC LIMIT 6"""
+        """SELECT substr(date_facture,1,7) as mois, SUM(montant_du_usd) as ca_usd FROM factures
+           WHERE statut='validee' GROUP BY mois ORDER BY mois DESC LIMIT 6"""
     ).fetchall()
 
     cours_usd = db.execute("SELECT date, ls_par_usd FROM taux_change ORDER BY date DESC LIMIT 30").fetchall()
 
     top_clients = db.execute(
-        """SELECT c.nom, SUM(f.total) as ca FROM factures f JOIN clients c ON f.client_id=c.id
-           WHERE f.date_facture LIKE ? AND f.statut='validee' AND f.devise='LS'
-           GROUP BY c.id ORDER BY ca DESC LIMIT 5""", (f"{mois}%",)
+        """SELECT c.nom, SUM(f.montant_du_usd) as ca_usd FROM factures f JOIN clients c ON f.client_id=c.id
+           WHERE f.date_facture LIKE ? AND f.statut='validee'
+           GROUP BY c.id ORDER BY ca_usd DESC LIMIT 5""", (f"{mois}%",)
     ).fetchall()
 
     nb_achats_mois = db.execute(
@@ -1341,7 +1441,7 @@ def get_dashboard():
 
     db.close()
     return jsonify({
-        'ca_jour': ca_jour, 'ca_mois': ca_mois, 'nb_factures': nb_factures,
+        'ca_jour_usd': ca_jour_usd, 'ca_mois_usd': ca_mois_usd, 'nb_factures': nb_factures,
         'nb_achats_mois': nb_achats_mois,
         'taux_change': taux,
         'alertes_stock': [dict(a) for a in alertes],

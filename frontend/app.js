@@ -38,7 +38,7 @@ const TR = {
     caisse_title:"Caisse", encaissements:"Encaissements (ventes)", decaissements:"Décaissements (achats)",
     solde:"Solde", periode:"Période", du:"Du", au:"au",
     backup_title:"Sauvegarde de la base de données",
-    backup_export:"Télécharger une sauvegarde", backup_import:"Restaurer une sauvegarde",
+    backup_export:"Sauvegarder la BD complète", backup_import:"Restaurer une sauvegarde", proposer_sauvegarde:"Voulez-vous sauvegarder la base de données avant de continuer ? C'est fortement recommandé.", puis_import_demo:"Une fois effacé, le programme importe automatiquement la démo",
     backup_warning:"⚠️ Restaurer remplacera toutes les données actuelles.",
     raison_annulation:"Raison de l'annulation", confirmer:"Confirmer",
     modifier_date:"Modifier la date", modifier: "Modifier",
@@ -53,7 +53,7 @@ const TR = {
     paiement_partiellement_paye:"Partiellement payé", ajouter_paiement:"Ajouter un paiement", payer_solde_restant:"Payer le solde restant",
     total_paye:"Total payé", solde_restant:"Solde restant", aucun_paiement:"Aucun paiement enregistré",
     prix_achat:"Prix d'achat", prix_vente:"Prix de vente", marge:"Marge", modifier_produit:"Modifier",
-    prix_obligatoire:"Chaque produit doit avoir un prix de vente (LS) pour pouvoir être vendu.",
+    prix_obligatoire:"Chaque produit doit avoir un prix de vente (LS) pour pouvoir être vendu.", gerer_categories:"Catégories de produits", nouvelle_categorie:"Nouvelle catégorie", modifier_categorie:"Modifier la catégorie", icone:"Icône", icone_perso:"Autre (coller un emoji)",
     stock_bas:"Stock bas", stock_critique:"Stock critique", stock_ok:"Stock OK",
     settings_title:"Réglages du programme", devise_defaut:"Devise par défaut de l'application",
     afficher_devise_secondaire:"Afficher l'autre devise en équivalent", oui:"Oui", non:"Non",
@@ -103,7 +103,7 @@ const TR = {
     caisse_title:"الصندوق", encaissements:"المقبوضات (المبيعات)", decaissements:"المدفوعات (المشتريات)",
     solde:"الرصيد", periode:"الفترة", du:"من", au:"إلى",
     backup_title:"نسخ احتياطي لقاعدة البيانات",
-    backup_export:"تنزيل نسخة احتياطية", backup_import:"استعادة نسخة احتياطية",
+    backup_export:"حفظ نسخة كاملة من قاعدة البيانات", backup_import:"استعادة نسخة احتياطية", proposer_sauvegarde:"هل تريد حفظ نسخة احتياطية من قاعدة البيانات قبل المتابعة؟ يُنصح بشدة بذلك.", puis_import_demo:"بعد الحذف، سيقوم البرنامج تلقائياً باستيراد العرض التجريبي",
     backup_warning:"⚠️ الاستعادة ستستبدل جميع البيانات الحالية.",
     raison_annulation:"سبب الإلغاء", confirmer:"تأكيد",
     modifier_date:"تعديل التاريخ", modifier:"تعديل",
@@ -118,7 +118,7 @@ const TR = {
     paiement_partiellement_paye:"مدفوعة جزئياً", ajouter_paiement:"إضافة دفعة", payer_solde_restant:"دفع كامل المتبقي",
     total_paye:"المدفوع", solde_restant:"المتبقي", aucun_paiement:"لا توجد دفعات مسجلة",
     prix_achat:"سعر الشراء", prix_vente:"سعر البيع", marge:"الهامش", modifier_produit:"تعديل",
-    prix_obligatoire:"يجب أن يكون لكل منتج سعر بيع (ل.س) ليصبح قابلاً للبيع.",
+    prix_obligatoire:"يجب أن يكون لكل منتج سعر بيع (ل.س) ليصبح قابلاً للبيع.", gerer_categories:"فئات المنتجات", nouvelle_categorie:"فئة جديدة", modifier_categorie:"تعديل الفئة", icone:"أيقونة", icone_perso:"أخرى (الصق رمزاً تعبيرياً)",
     stock_bas:"مخزون منخفض", stock_critique:"مخزون حرج", stock_ok:"مخزون جيد",
     settings_title:"إعدادات البرنامج", devise_defaut:"العملة الافتراضية للتطبيق",
     afficher_devise_secondaire:"عرض العملة الأخرى كمعادل", oui:"نعم", non:"لا",
@@ -168,7 +168,7 @@ const TR = {
     caisse_title:"Cash register", encaissements:"Income (sales)", decaissements:"Expenses (purchases)",
     solde:"Balance", periode:"Period", du:"From", au:"to",
     backup_title:"Database backup",
-    backup_export:"Download backup", backup_import:"Restore backup",
+    backup_export:"Back up the entire database", backup_import:"Restore backup", proposer_sauvegarde:"Would you like to back up the database before continuing? Strongly recommended.", puis_import_demo:"Once erased, the program automatically imports the demo",
     backup_warning:"⚠️ Restoring will replace all current data.",
     raison_annulation:"Cancellation reason", confirmer:"Confirm",
     modifier_date:"Edit date", modifier:"Edit",
@@ -183,7 +183,7 @@ const TR = {
     paiement_partiellement_paye:"Partially paid", ajouter_paiement:"Add payment", payer_solde_restant:"Pay remaining balance",
     total_paye:"Total paid", solde_restant:"Remaining balance", aucun_paiement:"No payment recorded",
     prix_achat:"Purchase price", prix_vente:"Sale price", marge:"Margin", modifier_produit:"Edit",
-    prix_obligatoire:"Every product must have a sale price (SYP) before it can be sold.",
+    prix_obligatoire:"Every product must have a sale price (SYP) before it can be sold.", gerer_categories:"Product categories", nouvelle_categorie:"New category", modifier_categorie:"Edit category", icone:"Icon", icone_perso:"Other (paste an emoji)",
     stock_bas:"Low stock", stock_critique:"Critical stock", stock_ok:"Stock OK",
     settings_title:"Program settings", devise_defaut:"Default currency of the application",
     afficher_devise_secondaire:"Show the other currency as equivalent", oui:"Yes", non:"No",
@@ -204,18 +204,20 @@ let appSettings = { devise_defaut: 'USD', afficher_devise_secondaire: '1' };
 let currentFactureCtx = { devise: 'LS', taux: 1 };
 let currentProdsList = [];
 
-// Memes 6 categories que dans la fiche produit, + un panier "autre" pour les
-// produits sans categorie. Meme systeme que Fer Magasin (les deux apps
-// classent les produits de la meme facon).
-const CATEGORIES = {
-  rond_beton: {ar:'حديد مسلح', fr:'Rond à béton',  en:'Rebar',    icon:'🔩'},
-  tube:       {ar:'أنبوب',     fr:'Tube',           en:'Tube',     icon:'▭'},
-  plat:       {ar:'حديد مسطح', fr:'Plat',           en:'Flat bar', icon:'▬'},
-  corniere:   {ar:'زاوية',     fr:'Cornière',       en:'Angle',    icon:'📐'},
-  profile:    {ar:'بروفيل',    fr:'Profilé',        en:'Profile',  icon:'⌶'},
-  treillis:   {ar:'شبكة',      fr:'Treillis',       en:'Mesh',     icon:'▦'},
-  autre:      {ar:'أخرى',      fr:'Autre',          en:'Other',    icon:'📦'},
-};
+// Categories dynamiques (avant : liste figee dans le code). Chargees au
+// demarrage via loadCategories(), modifiables depuis la page Produits.
+// Meme systeme de classement que Fer Magasin (icone + libelle par categorie).
+let CATEGORIES = { autre: {ar:'أخرى', fr:'Autre', en:'Other', icon:'📦'} };
+async function loadCategories(){
+  try {
+    const cats = await api('/categories');
+    if(Array.isArray(cats)){
+      const map = { autre: {ar:'أخرى', fr:'Autre', en:'Other', icon:'📦'} };
+      cats.forEach(c=>{ map[c.cle] = {ar:c.nom_ar, fr:c.nom_fr, en:c.nom_en||c.nom_fr, icon:c.icon||'📦'}; });
+      CATEGORIES = map;
+    }
+  } catch(e){ /* garde les valeurs par defaut si l'appel echoue */ }
+}
 function catLabel(cle){ return (CATEGORIES[cle] || CATEGORIES.autre)[lang]; }
 function catIcon(cle){ return (CATEGORIES[cle] || CATEGORIES.autre).icon; }
 let modalCatSelectionnee = null;
@@ -227,6 +229,15 @@ async function loadAppSettings(){
   } catch(e){ /* garde les valeurs par defaut si l'appel echoue */ }
 }
 function t(k){return TR[lang][k]||k;}
+/** Affiche un nom (produit, operation, type de ligne libre...) dans la langue
+ * de l'interface. Avant : toujours "arabe ou francais", meme quand la langue
+ * active etait l'anglais - l'anglais n'etait jamais reellement utilise. */
+function nomL(obj){
+  if(!obj) return '';
+  if(lang==='ar') return obj.nom_ar || obj.nom_fr || obj.nom_en || '';
+  if(lang==='en') return obj.nom_en || obj.nom_fr || obj.nom_ar || '';
+  return obj.nom_fr || obj.nom_ar || obj.nom_en || '';
+}
 
 function setLang(l){
   lang=l; localStorage.setItem('lang',l);
@@ -351,25 +362,32 @@ function renderApp(){
 async function renderDashboard(){
   document.getElementById('page-title').textContent=t('dashboard_title');
   const d=await api('/dashboard');
+  const taux = d.taux_change.ls_par_usd || 1;
+  const devDefaut = appSettings.devise_defaut || 'USD';
   document.getElementById('prix-topbar').innerHTML=
-    `<span>${t('taux_today')}:</span> <bdi style="unicode-bidi:isolate;direction:ltr">1$ = ${fmt(d.taux_change.ls_par_usd)} ${t('LS')}</bdi>`;
+    `<span>${t('taux_today')}:</span> <bdi style="unicode-bidi:isolate;direction:ltr">1$ = ${fmt(taux)} ${t('LS')}</bdi>`;
+
+  // Tous les montants remontent du serveur en USD (universel, quelle que soit
+  // la devise de chaque facture - voir montant_du_usd) ; on les affiche ici
+  // selon la devise par defaut choisie dans les Reglages, comme sur la page Produits.
+  const fmtCA = (usd) => devDefaut==='USD' ? fmtUSD(usd)+' '+t('USD') : fmt(Math.round(usd*taux))+' '+t('LS');
 
   let alertHTML='';
   if(d.alertes_stock.length>0){
     alertHTML=`<div class="alert alert-warn">⚠️ ${t('alertes_stock')}: `+
-      d.alertes_stock.map(a=>lang==='ar'?a.nom_ar:a.nom_fr).join(', ')+'</div>';
+      d.alertes_stock.map(a=>nomL(a)).join(', ')+'</div>';
   }
   const topHTML=d.top_clients.length?d.top_clients.map(c=>
-    `<div class="prix-row"><span>${c.nom}</span><span class="prix-val">${fmt(c.ca)} ${t('LS')}</span></div>`
+    `<div class="prix-row"><span>${c.nom}</span><span class="prix-val num">${fmtCA(c.ca_usd)}</span></div>`
   ).join(''):`<div class="empty-state"><p>—</p></div>`;
 
   document.getElementById('content').innerHTML=`
     ${alertHTML}
     <div class="stats-grid">
-      <div class="stat-card"><span class="ico">💰</span><div class="lbl">${t('ca_jour')}</div><div class="val">${fmt(d.ca_jour)}</div><div class="sub">${t('LS')}</div></div>
-      <div class="stat-card gold"><span class="ico">📅</span><div class="lbl">${t('ca_mois')}</div><div class="val">${fmt(d.ca_mois)}</div><div class="sub">${t('LS')}</div></div>
+      <div class="stat-card"><span class="ico">💰</span><div class="lbl">${t('ca_jour')}</div><div class="val num">${fmtCA(d.ca_jour_usd)}</div></div>
+      <div class="stat-card gold"><span class="ico">📅</span><div class="lbl">${t('ca_mois')}</div><div class="val num">${fmtCA(d.ca_mois_usd)}</div></div>
       <div class="stat-card green"><span class="ico">📄</span><div class="lbl">${t('nb_factures')}</div><div class="val">${d.nb_factures}</div><div class="sub">${t('nb_achats')}: ${d.nb_achats_mois}</div></div>
-      <div class="stat-card" style="border-color:#2c6f8a"><span class="ico">💵</span><div class="lbl">${t('taux_today')}</div><div class="val">${fmt(d.taux_change.ls_par_usd)}</div><div class="sub">${t('LS')} = 1$</div></div>
+      <div class="stat-card" style="border-color:#2c6f8a"><span class="ico">💵</span><div class="lbl">${t('taux_today')}</div><div class="val num">${fmt(taux)}</div><div class="sub"><bdi style="unicode-bidi:isolate;direction:ltr">1$ = ${fmt(taux)} ${t('LS')}</bdi></div></div>
     </div>
     <div class="charts-grid">
       <div class="chart-card"><h3>${t('chart_ca_mois')}</h3><canvas id="cCA"></canvas></div>
@@ -384,7 +402,7 @@ async function renderDashboard(){
 
   chartCA=new Chart(document.getElementById('cCA'),{type:'bar',data:{
     labels:d.ca_par_mois.map(r=>r.mois),
-    datasets:[{label:t('LS'),data:d.ca_par_mois.map(r=>r.ca),backgroundColor:'#c1522a',borderRadius:5}]
+    datasets:[{label:devDefaut, data:d.ca_par_mois.map(r=>devDefaut==='USD'?r.ca_usd:Math.round((r.ca_usd||0)*taux)),backgroundColor:'#c1522a',borderRadius:5}]
   },options:{plugins:{legend:{display:false}},responsive:true}});
 
   chartUsd=new Chart(document.getElementById('cUsd'),{type:'line',data:{
@@ -515,11 +533,11 @@ async function viewFacture(id){
   currentProdsList = prods;
   const opsOpts=ops.map(o=>{
     const prixConverti = dev==='USD' ? o.prix_unitaire : Math.round(o.prix_unitaire * currentFactureCtx.taux);
-    return `<option value="${o.id}" data-prix="${prixConverti}">${lang==='ar'?o.nom_ar:o.nom_fr} — ${dev==='USD'?fmtUSD(prixConverti):fmt(prixConverti)} ${devLabel(dev)}</option>`;
+    return `<option value="${o.id}" data-prix="${prixConverti}">${nomL(o)} — ${dev==='USD'?fmtUSD(prixConverti):fmt(prixConverti)} ${devLabel(dev)}</option>`;
   }).join('');
   const typesLLOpts=typesLL.map(tl=>{
     const montantConverti = dev==='USD' ? tl.montant_par_defaut : Math.round(tl.montant_par_defaut * currentFactureCtx.taux);
-    return `<option value="${tl.id}" data-signe="${tl.signe_par_defaut}" data-montant="${montantConverti}" data-nom-fr="${tl.nom_fr}" data-nom-ar="${tl.nom_ar}">${(tl.signe_par_defaut==='moins'?'➖ ':'➕ ')}${lang==='ar'?tl.nom_ar:tl.nom_fr}</option>`;
+    return `<option value="${tl.id}" data-signe="${tl.signe_par_defaut}" data-montant="${montantConverti}" data-nom-fr="${tl.nom_fr}" data-nom-ar="${tl.nom_ar}">${(tl.signe_par_defaut==='moins'?'➖ ':'➕ ')}${nomL(tl)}</option>`;
   }).join('');
 
   const canEdit = facture.statut!=='annulee';
@@ -535,7 +553,7 @@ async function viewFacture(id){
 
   const opsHTML=operations.length?operations.map(o=>`
     <tr>
-      <td>${lang==='ar'?o.nom_ar:o.nom_fr}</td>
+      <td>${nomL(o)}</td>
       <td>${canEdit?`<input type="number" class="form-control" value="${o.quantite}" style="width:70px;display:inline-block" onchange="updateOpFacture(${id},${o.id},this.value,${o.prix_unitaire})">`:o.quantite}</td>
       <td>${canEdit?`<input type="number" class="form-control" value="${o.prix_unitaire}" step="50" style="width:110px;display:inline-block" onchange="updateOpFacture(${id},${o.id},${o.quantite},this.value)">`:fmt(o.prix_unitaire)}</td>
       <td><strong>${fmt(o.sous_total)} ${devLabel(dev)}</strong></td>
@@ -734,8 +752,9 @@ async function delPaiement(ptype, facId, paiementId){
  * dans le meme esprit visuel que Fer Magasin. Reutilise ap-prod/ap-poids/
  * updateApPreview/addLigne tels quels via un select cache a une seule
  * option, pour ne rien casser du flux d'ajout deja teste. */
-function openProduitPickerModal(facId){
+async function openProduitPickerModal(facId){
   modalCatSelectionnee = null;
+  await loadCategories();
   renderProduitPickerModal(facId);
 }
 function renderProduitPickerModal(facId){
@@ -766,7 +785,7 @@ function renderProduitPickerModal(facId){
     const prixLabel = dev==='USD' ? fmtUSD(prixConverti) : fmt(prixConverti);
     return `
     <button class="tile-btn" onclick="selectProduitPickerProduit(${facId},${p.id})">
-      ${lang==='ar'?p.nom_ar:p.nom_fr}
+      ${nomL(p)}
       <span class="tile-sub">${p.dimension||''}</span>
       <span class="tile-prix">${prixLabel} ${devLabel(dev)}</span>
     </button>`;
@@ -795,7 +814,7 @@ function selectProduitPickerProduit(facId, prodId){
   const poidsStep = unite==='piece' ? 1 : 0.1;
   const poidsLabel = unite==='piece' ? t('quantite_piece') : t('poids_kg');
 
-  showModal(`${lang==='ar'?p.nom_ar:p.nom_fr}${p.dimension?' ('+p.dimension+')':''}`, `
+  showModal(`${nomL(p)}${p.dimension?' ('+p.dimension+')':''}`, `
     <button class="btn btn-ghost btn-sm" style="margin-bottom:12px" onclick="renderProduitPickerModal(${facId})">${t('retour')}</button>
     <select id="ap-prod" style="display:none"><option value="${p.id}" data-unite="${unite}" data-prix="${prixConverti}" selected></option></select>
     <div class="form-group"><label id="ap-poids-label">${poidsLabel}</label><input type="number" class="form-control" id="ap-poids" value="${poidsDefaut}" step="${poidsStep}" min="0" oninput="updateApPreview()" style="font-size:1.2rem;text-align:center"></div>
@@ -1062,8 +1081,8 @@ async function viewAchat(id){
   const dev=facture.devise;
   const canEdit=facture.statut==='brouillon';
 
-  const prodsOpts=prods.map(p=>`<option value="${p.id}" data-unite="${p.unite||'kg'}">${lang==='ar'?p.nom_ar:p.nom_fr} (${p.dimension||''})</option>`).join('');
-  const typesLLOpts=typesLL.map(tl=>`<option value="${tl.id}" data-signe="${tl.signe_par_defaut}" data-montant="${tl.montant_par_defaut}" data-nom-fr="${tl.nom_fr}" data-nom-ar="${tl.nom_ar}">${(tl.signe_par_defaut==='moins'?'➖ ':'➕ ')}${lang==='ar'?tl.nom_ar:tl.nom_fr}</option>`).join('');
+  const prodsOpts=prods.map(p=>`<option value="${p.id}" data-unite="${p.unite||'kg'}">${nomL(p)} (${p.dimension||''})</option>`).join('');
+  const typesLLOpts=typesLL.map(tl=>`<option value="${tl.id}" data-signe="${tl.signe_par_defaut}" data-montant="${tl.montant_par_defaut}" data-nom-fr="${tl.nom_fr}" data-nom-ar="${tl.nom_ar}">${(tl.signe_par_defaut==='moins'?'➖ ':'➕ ')}${nomL(tl)}</option>`).join('');
 
   const lignesHTML=lignes.length?lignes.map(l=>`
     <tr>
@@ -1307,7 +1326,9 @@ async function saveFourn(id=null){
 async function renderProduits(){
   document.getElementById('page-title').textContent=t('produits_list');
   document.getElementById('content').innerHTML=`<div class="empty-state"><div class="empty-icon">⏳</div></div>`;
+  await loadCategories();
   const prods=await api('/produits');
+  const categories=await api('/categories');
   const tauxToday=await api('/taux-change/today');
   const taux = (tauxToday && tauxToday.ls_par_usd) ? tauxToday.ls_par_usd : 1;
   const devDefaut = appSettings.devise_defaut || 'USD';
@@ -1319,14 +1340,29 @@ async function renderProduits(){
     if(devDefaut==='USD') return fmtUSD(val/taux)+' '+t('USD');
     return fmt(val)+' '+t('LS');
   };
-  const cats={rond_beton:'🔩',tube:'🔲',plat:'▬',corniere:'📐',profile:'📏',treillis:'🔲'};
   const grouped={};
-  prods.forEach(p=>{if(!grouped[p.categorie])grouped[p.categorie]=[];grouped[p.categorie].push(p);});
+  prods.forEach(p=>{const cle=p.categorie||'autre'; if(!grouped[cle])grouped[cle]=[]; grouped[cle].push(p);});
+
+  const catsManagerHTML = categories.map(c=>`
+    <div class="prix-row">
+      <span>${c.icon} ${nomL(c)}</span>
+      <span style="display:flex;gap:6px;align-items:center">
+        <span class="num" style="color:var(--muted);font-size:.76rem">${(grouped[c.cle]||[]).length} ${lang==='ar'?'صنف':'produits'}</span>
+        <button class="btn btn-ghost btn-sm" onclick="editCategorieModal('${c.cle}')">✏️</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteCategorieConfirm('${c.cle}')">🗑</button>
+      </span>
+    </div>`).join('');
+
   let html=`<div class="table-header" style="background:white;border-radius:14px;padding:16px 20px;box-shadow:0 2px 10px rgba(0,0,0,.06);margin-bottom:16px">
-    <h3>${t('produits_list')}</h3><button class="btn btn-primary" onclick="addProdModal()">+ ${t('nouveau_produit')}</button></div>`;
-  Object.entries(grouped).forEach(([cat,ps])=>{
+    <h3>${t('produits_list')}</h3><button class="btn btn-primary" onclick="addProdModal()">+ ${t('nouveau_produit')}</button></div>
+
+    <div class="table-card" style="margin-bottom:16px">
+      <div class="table-header"><h3>${t('gerer_categories')}</h3><button class="btn btn-gold btn-sm" onclick="addCategorieModal()">+ ${t('nouvelle_categorie')}</button></div>
+      ${catsManagerHTML || `<p style="text-align:center;color:var(--muted);padding:16px">${t('aucune_donnee')}</p>`}
+    </div>`;
+  Object.entries(grouped).forEach(([cle,ps])=>{
     html+=`<div class="table-card" style="margin-bottom:14px">
-      <div class="table-header"><h3>${cats[cat]||''} ${cat}</h3></div>
+      <div class="table-header"><h3>${catIcon(cle)} ${catLabel(cle)}</h3></div>
       <div style="overflow-x:auto"><table class="data">
         <thead><tr><th>${lang==='ar'?'الاسم':'Nom'}</th><th>${t('dimension')}</th><th>${t('unite_vente')}</th><th>${t('prix_achat')}</th><th>${t('prix_vente')}</th><th>${t('marge')}</th><th>${t('actions')}</th></tr></thead>
         <tbody>${ps.map(p=>{
@@ -1336,7 +1372,7 @@ async function renderProduits(){
           const uniteLabel = p.unite==='piece' ? t('unite_piece') : t('unite_kg');
           const uniteSuffix = p.unite==='piece' ? t('unite_piece_short') : t('kg');
           return `<tr>
-            <td><strong>${lang==='ar'?p.nom_ar:p.nom_fr}</strong></td>
+            <td><strong>${nomL(p)}</strong></td>
             <td>${p.dimension||'—'}</td>
             <td><span class="badge" style="background:${p.unite==='piece'?'#dbe7ec':'#f3e6dc'};color:${p.unite==='piece'?'#2c6f8a':'var(--sea)'}">${uniteLabel}</span></td>
             <td class="num">${fmtPrix(achat)}${achat?'/'+uniteSuffix:''}</td>
@@ -1368,13 +1404,11 @@ function prodFormHTML(p={}){
   return `
     <div class="form-group"><label>الاسم بالعربية *</label><input class="form-control" id="p-ar" value="${p.nom_ar||''}" placeholder="حديد مسلح 10 ملم"></div>
     <div class="form-group"><label>Nom Français</label><input class="form-control" id="p-fr" value="${p.nom_fr||''}" placeholder="Rond à béton 10mm"></div>
+    <div class="form-group"><label>English name</label><input class="form-control" id="p-en" value="${p.nom_en||''}" placeholder="Rebar 10mm"></div>
     <div class="form-group"><label>${t('categorie')}</label><select class="form-control" id="p-cat">
-      <option value="rond_beton" ${p.categorie==='rond_beton'?'selected':''}>Rond à béton / حديد مسلح</option>
-      <option value="tube" ${p.categorie==='tube'?'selected':''}>Tube / أنبوب</option>
-      <option value="plat" ${p.categorie==='plat'?'selected':''}>Plat / مسطح</option>
-      <option value="corniere" ${p.categorie==='corniere'?'selected':''}>Cornière / زاوية</option>
-      <option value="profile" ${p.categorie==='profile'?'selected':''}>Profilé / بروفيل</option>
-      <option value="treillis" ${p.categorie==='treillis'?'selected':''}>Treillis / شبكة</option>
+      ${Object.entries(CATEGORIES).filter(([cle])=>cle!=='autre').map(([cle,c])=>
+        `<option value="${cle}" ${p.categorie===cle?'selected':''}>${c.icon} ${c.fr} / ${c.ar}</option>`
+      ).join('')}
     </select></div>
     <div class="form-group"><label>${t('dimension')}</label><input class="form-control" id="p-dim" value="${p.dimension||''}" placeholder="Ø10mm"></div>
     <div class="form-group">
@@ -1423,6 +1457,7 @@ async function saveProd(prodId=null){
   const data = {
     nom_ar: document.getElementById('p-ar').value,
     nom_fr: document.getElementById('p-fr').value,
+    nom_en: document.getElementById('p-en').value,
     categorie: document.getElementById('p-cat').value,
     dimension: document.getElementById('p-dim').value,
     unite: document.getElementById('p-unite').value,
@@ -1444,6 +1479,82 @@ async function doDeleteProd(prodId){
 }
 
 // ═══════════════════════════════════════════════════════════
+//  CATEGORIES DE PRODUITS
+// ═══════════════════════════════════════════════════════════
+// Choix d'icones adaptes a un commerce de fer/quincaillerie, cliquables plutot
+// que de devoir taper/coller un emoji a la main (invisible pour la plupart des
+// gens sur Windows - d'ou la confusion "je ne sais pas comment le changer").
+const ICON_CHOICES = ['🔩','▭','▬','📐','⌶','▦','🧱','🏗️','⚙️','🔧','🛠️','📏','⛓️','🪝','🗜️','🔨','🚧','🏭','🔗','📦','✨','🔲','🔳','⬜'];
+function iconPickerHTML(selected){
+  const cur = selected || '📦';
+  return `
+    <div class="form-group">
+      <label>${t('icone')}</label>
+      <input type="hidden" id="cat-icon" value="${cur}">
+      <div id="icon-picker-grid" style="display:grid;grid-template-columns:repeat(8,1fr);gap:6px;margin-bottom:8px">
+        ${ICON_CHOICES.map(ic=>`<button type="button" class="icon-choice-btn${ic===cur?' active':''}" onclick="selectIcon('${ic}')">${ic}</button>`).join('')}
+      </div>
+      <input class="form-control" id="cat-icon-custom" value="${cur}" maxlength="4" placeholder="${t('icone_perso')}"
+        oninput="document.getElementById('cat-icon').value=this.value; syncIconGrid(this.value)"
+        style="font-size:1.1rem;text-align:center;max-width:160px">
+    </div>`;
+}
+function selectIcon(ic){
+  document.getElementById('cat-icon').value = ic;
+  document.getElementById('cat-icon-custom').value = ic;
+  syncIconGrid(ic);
+}
+function syncIconGrid(ic){
+  document.querySelectorAll('.icon-choice-btn').forEach(b=>{
+    b.classList.toggle('active', b.textContent.trim() === ic);
+  });
+}
+
+function categorieFormHTML(c={}){
+  return `
+    <div class="form-group"><label>Nom Français *</label><input class="form-control" id="cat-fr" value="${c.nom_fr||''}" placeholder="Ex: Silver Tube"></div>
+    <div class="form-group"><label>الاسم بالعربية</label><input class="form-control" id="cat-ar" value="${c.nom_ar||''}" placeholder="مثال: أنبوب فضي"></div>
+    <div class="form-group"><label>English name</label><input class="form-control" id="cat-en" value="${c.nom_en||''}" placeholder="Ex: Silver Tube"></div>
+    ${iconPickerHTML(c.icon)}`;
+}
+function addCategorieModal(){
+  showModal(t('nouvelle_categorie'), categorieFormHTML(),
+    `<button class="btn btn-primary" onclick="saveCategorie()">✓ ${t('sauvegarder')}</button><button class="btn btn-ghost" onclick="closeModalDirect()">${t('annuler')}</button>`);
+}
+async function editCategorieModal(cle){
+  const cats = await api('/categories');
+  const c = cats.find(x=>x.cle===cle);
+  if(!c) return;
+  showModal(t('modifier_categorie'), categorieFormHTML(c),
+    `<button class="btn btn-primary" onclick="saveCategorie('${cle}')">✓ ${t('sauvegarder')}</button><button class="btn btn-ghost" onclick="closeModalDirect()">${t('annuler')}</button>`);
+}
+async function saveCategorie(cle=null){
+  const data = {
+    nom_fr: document.getElementById('cat-fr').value.trim(),
+    nom_ar: document.getElementById('cat-ar').value.trim(),
+    nom_en: document.getElementById('cat-en').value.trim(),
+    icon: document.getElementById('cat-icon').value.trim() || '📦',
+  };
+  if(!data.nom_fr && !data.nom_ar){ toast(t('champs_requis'), false); return; }
+  const res = cle
+    ? await api(`/categories/${cle}`,{method:'PUT',body:JSON.stringify(data)})
+    : await api('/categories',{method:'POST',body:JSON.stringify(data)});
+  if(res.error){ toast(res.error, false); return; }
+  closeModalDirect(); toast(t('save_ok')); renderProduits();
+}
+function deleteCategorieConfirm(cle){
+  showModal(t('supprimer'), `<p>${lang==='ar'?'هل أنت متأكد؟':'Êtes-vous sûr ?'}</p>`,
+    `<button class="btn btn-danger" onclick="doDeleteCategorie('${cle}')">✓ ${t('confirmer')}</button>
+     <button class="btn btn-ghost" onclick="closeModalDirect()">${t('annuler')}</button>`);
+}
+async function doDeleteCategorie(cle){
+  const res = await api(`/categories/${cle}`,{method:'DELETE'});
+  closeModalDirect();
+  if(res.error){ toast(res.error, false); return; }
+  toast(t('save_ok')); renderProduits();
+}
+
+// ═══════════════════════════════════════════════════════════
 //  COURS DU DOLLAR
 // ═══════════════════════════════════════════════════════════
 async function renderTaux(){
@@ -1460,8 +1571,8 @@ async function renderTaux(){
           <button class="btn btn-primary" style="width:100%;background:#2c6f8a" onclick="saveTaux()">✓ ${t('update_prix')}</button>
         </div>
         <div class="stat-card" style="border-color:#2c6f8a">
-          <div class="lbl">${t('taux_today')}</div><div class="val">${fmt(today.ls_par_usd)}</div>
-          <div class="sub">${t('LS')} = 1$ · ${today.date}</div>
+          <div class="lbl">${t('taux_today')}</div><div class="val num">${fmt(today.ls_par_usd)}</div>
+          <div class="sub"><bdi style="unicode-bidi:isolate;direction:ltr">1$ = ${fmt(today.ls_par_usd)} ${t('LS')}</bdi> · ${today.date}</div>
         </div>
       </div>
       <div class="table-card"><div class="table-header"><h3>${t('historique_taux')}</h3></div>
@@ -1489,7 +1600,7 @@ async function renderInventaire(){
     const st = stockStatus(i.stock_kg, i.stock_min_alerte);
     return `
     <tr style="background:${st.bg}">
-      <td><strong>${lang==='ar'?i.nom_ar:i.nom_fr}</strong></td>
+      <td><strong>${nomL(i)}</strong></td>
       <td>${i.dimension||'—'}</td>
       <td><input type="number" class="form-control" value="${i.stock_kg}" step="10" style="width:110px;display:inline-block" onchange="updateStock(${i.produit_id},this.value)"> ${t('kg')}</td>
       <td><input type="number" class="form-control" value="${i.stock_min_alerte}" step="10" style="width:90px;display:inline-block" onchange="updateSeuil(${i.produit_id},this.value)"> ${t('kg')}</td>
@@ -1513,11 +1624,22 @@ async function updateSeuil(pid,v){await api(`/inventaire/${pid}`,{method:'PUT',b
 async function renderOperations(){
   document.getElementById('page-title').textContent=t('operations_list');
   const ops=await api('/operations');
+  const typesLL = await api('/types-lignes-libres');
   const rows=ops.map(o=>`
     <tr>
-      <td><strong>${lang==='ar'?o.nom_ar:o.nom_fr}</strong></td>
+      <td><strong>${nomL(o)}</strong></td>
       <td style="color:var(--muted);font-size:.85rem">${o.nom_fr}</td>
       <td><input type="number" class="form-control" value="${o.prix_unitaire}" step="0.05" min="0" style="width:130px;display:inline-block" onchange="updateOp(${o.id},'${o.nom_fr}','${o.nom_ar}',this.value)"> ${t('USD')}</td>
+    </tr>`).join('');
+  const typesLLHTML = typesLL.map(tl => `
+    <tr>
+      <td>${nomL(tl)}</td>
+      <td><span class="badge" style="background:${tl.signe_par_defaut==='moins'?'#f8d7da':'#d1f0e0'};color:${tl.signe_par_defaut==='moins'?'#721c24':'#155724'}">${tl.signe_par_defaut==='moins'?t('moins'):t('plus')}</span></td>
+      <td>${fmtUSD(tl.montant_par_defaut)} ${t('USD')}</td>
+      <td>
+        <button class="btn btn-ghost btn-sm" onclick="editTypeLLModal(${tl.id})">✏️</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteTypeLL(${tl.id})">🗑</button>
+      </td>
     </tr>`).join('');
   document.getElementById('content').innerHTML=`
     <div class="table-card">
@@ -1525,7 +1647,18 @@ async function renderOperations(){
       <div style="overflow-x:auto"><table class="data">
         <thead><tr><th>${lang==='ar'?'الاسم بالعربية':'Nom arabe'}</th><th>Français</th><th>${t('prix_unitaire')}</th></tr></thead>
         <tbody>${rows}</tbody>
-      </table></div></div>`;
+      </table></div></div>
+
+    <div class="table-card" style="margin-top:18px">
+      <div class="table-header">
+        <h3>${t('gerer_types_lignes')}</h3>
+        <button class="btn btn-gold btn-sm" onclick="addTypeLLModal()">+ ${t('nouveau_type_ligne')}</button>
+      </div>
+      <div style="overflow-x:auto"><table class="data">
+        <thead><tr><th>${lang==='ar'?'الاسم':'Nom'}</th><th>${t('signe')}</th><th>${t('montant_defaut')}</th><th></th></tr></thead>
+        <tbody>${typesLLHTML || `<tr><td colspan="4" style="text-align:center;color:var(--muted);padding:16px">${t('aucune_donnee')}</td></tr>`}</tbody>
+      </table></div>
+    </div>`;
 }
 async function updateOp(id,nf,na,p){await api(`/operations/${id}`,{method:'PUT',body:JSON.stringify({nom_fr:nf,nom_ar:na,prix_unitaire:parseFloat(p)})});toast(t('save_ok'));}
 function addOpModal(){showModal(t('nouvelle_operation'),`
@@ -1579,20 +1712,8 @@ async function renderSettings(){
   document.getElementById('page-title').textContent=t('settings_title');
   document.getElementById('content').innerHTML=`<div class="empty-state"><div class="empty-icon">⏳</div></div>`;
   const settings = await api('/settings');
-  const typesLL = await api('/types-lignes-libres');
   const devise = settings.devise_defaut || 'USD';
   const afficherSecondaire = settings.afficher_devise_secondaire !== '0';
-
-  const typesLLHTML = typesLL.map(tl => `
-    <tr>
-      <td>${lang==='ar'?tl.nom_ar:tl.nom_fr}</td>
-      <td><span class="badge" style="background:${tl.signe_par_defaut==='moins'?'#f8d7da':'#d1f0e0'};color:${tl.signe_par_defaut==='moins'?'#721c24':'#155724'}">${tl.signe_par_defaut==='moins'?t('moins'):t('plus')}</span></td>
-      <td>${fmtUSD(tl.montant_par_defaut)} ${t('USD')}</td>
-      <td>
-        <button class="btn btn-ghost btn-sm" onclick="editTypeLLModal(${tl.id})">✏️</button>
-        <button class="btn btn-danger btn-sm" onclick="deleteTypeLL(${tl.id})">🗑</button>
-      </td>
-    </tr>`).join('');
 
   document.getElementById('content').innerHTML=`
     <div class="table-card" style="padding:24px;max-width:560px">
@@ -1615,17 +1736,6 @@ async function renderSettings(){
       </div>
 
       <button class="btn btn-primary" onclick="saveSettings()">✓ ${t('sauvegarder')}</button>
-    </div>
-
-    <div class="table-card" style="max-width:560px;margin-top:18px">
-      <div class="table-header">
-        <h3>${t('gerer_types_lignes')}</h3>
-        <button class="btn btn-gold btn-sm" onclick="addTypeLLModal()">+ ${t('nouveau_type_ligne')}</button>
-      </div>
-      <div style="overflow-x:auto"><table class="data">
-        <thead><tr><th>${lang==='ar'?'الاسم':'Nom'}</th><th>${t('signe')}</th><th>${t('montant_defaut')}</th><th></th></tr></thead>
-        <tbody>${typesLLHTML || `<tr><td colspan="4" style="text-align:center;color:var(--muted);padding:16px">${t('aucune_donnee')}</td></tr>`}</tbody>
-      </table></div>
     </div>
 
     <div class="table-card" style="padding:24px;max-width:560px;margin-top:18px">
@@ -1689,7 +1799,7 @@ async function editTypeLLModal(typeId){
   const types = await api('/types-lignes-libres');
   const tl = types.find(x=>x.id===typeId);
   if(!tl) return;
-  showModal(lang==='ar'?tl.nom_ar:tl.nom_fr, typeLLFormHTML(tl),
+  showModal(nomL(tl), typeLLFormHTML(tl),
     `<button class="btn btn-primary" onclick="saveTypeLL(${typeId})">✓ ${t('sauvegarder')}</button><button class="btn btn-ghost" onclick="closeModalDirect()">${t('annuler')}</button>`);
 }
 async function saveTypeLL(typeId=null){
@@ -1701,11 +1811,11 @@ async function saveTypeLL(typeId=null){
   };
   if(typeId) await api(`/types-lignes-libres/${typeId}`,{method:'PUT',body:JSON.stringify(data)});
   else await api('/types-lignes-libres',{method:'POST',body:JSON.stringify(data)});
-  toast(t('save_ok')); closeModalDirect(); renderSettings();
+  toast(t('save_ok')); closeModalDirect(); renderOperations();
 }
 async function deleteTypeLL(typeId){
   await api(`/types-lignes-libres/${typeId}`,{method:'DELETE'});
-  toast(t('save_ok')); renderSettings();
+  toast(t('save_ok')); renderOperations();
 }
 
 async function saveSettings(){
@@ -1729,6 +1839,8 @@ async function doImportBackup(){
 
 function confirmResetComplet(){
   showModal(t('effacer_donnees'), `
+    <div class="alert alert-warn">💾 ${t('proposer_sauvegarde')}</div>
+    <a class="btn btn-gold" style="width:100%;display:flex;justify-content:center;margin-bottom:16px" href="/api/backup/export" download>📥 ${t('backup_export')}</a>
     <div class="alert alert-danger">⚠️ ${t('effacer_donnees_desc')}</div>
     <div class="form-group"><label>${t('taper_effacer')}</label><input class="form-control" id="confirm-effacer-input" placeholder="EFFACER"></div>`,
     `<button class="btn-xl danger" onclick="doResetComplet()" style="padding:10px 20px">✓ ${t('confirmer')}</button>
@@ -1746,7 +1858,9 @@ async function doResetComplet(){
 function confirmImportDemo(scenario){
   const labels = {standard: t('demo_standard'), gros_volume: t('demo_volume'), credits: t('demo_credits')};
   showModal(labels[scenario], `
-    <div class="alert alert-danger">⚠️ ${t('effacer_donnees_desc')}</div>
+    <div class="alert alert-warn">💾 ${t('proposer_sauvegarde')}</div>
+    <a class="btn btn-gold" style="width:100%;display:flex;justify-content:center;margin-bottom:16px" href="/api/backup/export" download>📥 ${t('backup_export')}</a>
+    <div class="alert alert-danger">⚠️ ${t('effacer_donnees_desc')}<br><strong>${t('puis_import_demo')} « ${labels[scenario]} ».</strong></div>
     <div class="form-group"><label>${t('taper_effacer')}</label><input class="form-control" id="confirm-demo-input" placeholder="EFFACER"></div>`,
     `<button class="btn-xl gold" onclick="doImportDemo('${scenario}')" style="padding:10px 20px">✓ ${t('confirmer')}</button>
      <button class="btn btn-ghost" onclick="closeModalDirect()">${t('annuler')}</button>`);
@@ -1756,8 +1870,8 @@ async function doImportDemo(scenario){
   const res = await api('/settings/import-demo', {method:'POST', body: JSON.stringify({confirme: val, scenario})});
   if(res.error){ toast(res.error, false); return; }
   closeModalDirect();
-  toast(t('save_ok'));
-  setTimeout(()=>location.reload(), 1000);
+  toast(`✓ ${res.nb_factures||0} ${lang==='ar'?'فاتورة تم استيرادها':'factures importées'}`);
+  setTimeout(()=>location.reload(), 1200);
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -1902,4 +2016,4 @@ async function importVentesMagasin(){
 // ═══════════════════════════════════════════════════════════
 applyLangDom();
 document.getElementById('nav-dashboard').classList.add('active');
-loadAppSettings().then(() => renderApp());
+Promise.all([loadAppSettings(), loadCategories()]).then(() => renderApp());
