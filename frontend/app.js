@@ -34,7 +34,7 @@ const TR = {
     facture_num:"N° Facture", achat_num:"N° Achat",
     select_client:"-- Sélectionner un client --", select_fournisseur:"-- Sélectionner un fournisseur --",
     select_produit:"-- Sélectionner un produit --", select_operation:"-- Sélectionner une opération --",
-    delete:"Supprimer", retour:"← Retour", historique:"Historique des modifications",
+    delete:"Supprimer", retour:"← Retour", retour_categories:"← Catégories", choisir_produit:"Choisir un produit", choisir_produit_aide:"Catégorie puis modèle, comme dans Fer Magasin.", historique:"Historique des modifications",
     caisse_title:"Caisse", encaissements:"Encaissements (ventes)", decaissements:"Décaissements (achats)",
     solde:"Solde", periode:"Période", du:"Du", au:"au",
     backup_title:"Sauvegarde de la base de données",
@@ -99,7 +99,7 @@ const TR = {
     facture_num:"رقم الفاتورة", achat_num:"رقم فاتورة الشراء",
     select_client:"-- اختر الزبون --", select_fournisseur:"-- اختر التاجر --",
     select_produit:"-- اختر منتجاً --", select_operation:"-- اختر عملية --",
-    delete:"حذف", retour:"→ رجوع", historique:"سجل التعديلات",
+    delete:"حذف", retour:"→ رجوع", retour_categories:"→ الفئات", choisir_produit:"اختيار منتج", choisir_produit_aide:"الفئة ثم الصنف، كما في متجر الحديد.", historique:"سجل التعديلات",
     caisse_title:"الصندوق", encaissements:"المقبوضات (المبيعات)", decaissements:"المدفوعات (المشتريات)",
     solde:"الرصيد", periode:"الفترة", du:"من", au:"إلى",
     backup_title:"نسخ احتياطي لقاعدة البيانات",
@@ -164,7 +164,7 @@ const TR = {
     facture_num:"Invoice #", achat_num:"Purchase #",
     select_client:"-- Select client --", select_fournisseur:"-- Select supplier --",
     select_produit:"-- Select product --", select_operation:"-- Select operation --",
-    delete:"Delete", retour:"← Back", historique:"Change history",
+    delete:"Delete", retour:"← Back", retour_categories:"← Categories", choisir_produit:"Choose a product", choisir_produit_aide:"Category then model, just like Fer Magasin.", historique:"Change history",
     caisse_title:"Cash register", encaissements:"Income (sales)", decaissements:"Expenses (purchases)",
     solde:"Balance", periode:"Period", du:"From", au:"to",
     backup_title:"Database backup",
@@ -208,15 +208,17 @@ let currentProdsList = [];
 // produits sans categorie. Meme systeme que Fer Magasin (les deux apps
 // classent les produits de la meme facon).
 const CATEGORIES = {
-  rond_beton: {ar:'حديد مسلح', fr:'Rond à béton',  en:'Rebar'},
-  tube:       {ar:'أنبوب',     fr:'Tube',           en:'Tube'},
-  plat:       {ar:'حديد مسطح', fr:'Plat',           en:'Flat bar'},
-  corniere:   {ar:'زاوية',     fr:'Cornière',       en:'Angle'},
-  profile:    {ar:'بروفيل',    fr:'Profilé',        en:'Profile'},
-  treillis:   {ar:'شبكة',      fr:'Treillis',       en:'Mesh'},
-  autre:      {ar:'أخرى',      fr:'Autre',          en:'Other'},
+  rond_beton: {ar:'حديد مسلح', fr:'Rond à béton',  en:'Rebar',    icon:'🔩'},
+  tube:       {ar:'أنبوب',     fr:'Tube',           en:'Tube',     icon:'▭'},
+  plat:       {ar:'حديد مسطح', fr:'Plat',           en:'Flat bar', icon:'▬'},
+  corniere:   {ar:'زاوية',     fr:'Cornière',       en:'Angle',    icon:'📐'},
+  profile:    {ar:'بروفيل',    fr:'Profilé',        en:'Profile',  icon:'⌶'},
+  treillis:   {ar:'شبكة',      fr:'Treillis',       en:'Mesh',     icon:'▦'},
+  autre:      {ar:'أخرى',      fr:'Autre',          en:'Other',    icon:'📦'},
 };
 function catLabel(cle){ return (CATEGORIES[cle] || CATEGORIES.autre)[lang]; }
+function catIcon(cle){ return (CATEGORIES[cle] || CATEGORIES.autre).icon; }
+let modalCatSelectionnee = null;
 
 async function loadAppSettings(){
   try {
@@ -255,10 +257,11 @@ function toast(msg,ok=true){
   el.textContent=msg; el.style.background=ok?'#27ae60':'#c0392b';
   el.style.display='block'; setTimeout(()=>el.style.display='none',2500);
 }
-function showModal(title,body,footer=''){
+function showModal(title,body,footer='',wide=false){
   document.getElementById('modal-title').textContent=title;
   document.getElementById('modal-body').innerHTML=body;
   document.getElementById('modal-footer').innerHTML=footer;
+  document.getElementById('modal-box').classList.toggle('modal-wide', !!wide);
   document.getElementById('modal-overlay').style.display='flex';
 }
 function closeModal(e){if(e.target===document.getElementById('modal-overlay'))closeModalDirect();}
@@ -305,6 +308,7 @@ function goTo(page){
   document.querySelectorAll('#sidenav a').forEach(a=>a.classList.remove('active'));
   const el=document.getElementById('nav-'+page);
   if(el) el.classList.add('active');
+  if(window.resetContentScroll) window.resetContentScroll();
   renderApp();
   closeSidebar();
 }
@@ -402,7 +406,7 @@ async function renderFactures(){
     <tr>
       <td><strong>${f.numero}</strong></td>
       <td>${f.client_nom||'—'}</td>
-      <td>${f.date_facture}</td>
+      <td class="num">${f.date_facture}${f.heure_vente?`<br><span style="color:var(--muted);font-size:.76rem">${f.heure_vente}</span>`:''}</td>
       <td>${fmtMoneyDualInline(f.montant_du_usd, f.taux_change)}</td>
       <td><span class="badge ${f.statut}">${t(f.statut)}</span></td>
       <td>${f.statut!=='annulee' ? `<span class="badge ${payBadgeClass[f.statut_paiement]}">${t('paiement_'+f.statut_paiement)}</span>${f.statut_paiement!=='paye'?`<div class="num" style="font-size:.72rem;color:var(--muted);margin-top:3px">${t('solde_restant')}: ${fmtUSD(f.solde_usd)} ${t('USD')}</div>`:''}` : '—'}</td>
@@ -509,10 +513,6 @@ async function viewFacture(id){
   currentFactureCtx = { devise: facture.devise, taux: facture.taux_change || 1 };
 
   currentProdsList = prods;
-  const categoriesPresentes = [...new Set(prods.map(p=>(p.categorie && CATEGORIES[p.categorie])?p.categorie:'autre'))];
-  const catOpts = categoriesPresentes.map(cle=>`<option value="${cle}">${catLabel(cle)}</option>`).join('');
-  const premiereCategorie = categoriesPresentes[0] || 'autre';
-  const prodsOptsCat = buildProdOptsForCategory(prods, premiereCategorie, dev);
   const opsOpts=ops.map(o=>{
     const prixConverti = dev==='USD' ? o.prix_unitaire : Math.round(o.prix_unitaire * currentFactureCtx.taux);
     return `<option value="${o.id}" data-prix="${prixConverti}">${lang==='ar'?o.nom_ar:o.nom_fr} — ${dev==='USD'?fmtUSD(prixConverti):fmt(prixConverti)} ${devLabel(dev)}</option>`;
@@ -553,11 +553,8 @@ async function viewFacture(id){
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:20px">
       <div class="table-card" style="padding:16px">
         <h4 style="margin-bottom:10px;font-size:.9rem;color:var(--sea)">+ ${t('ajouter_ligne')}</h4>
-        <div class="form-group"><label>${t('categorie')}</label><select class="form-control" id="ap-cat" onchange="onApCatChange()">${catOpts}</select></div>
-        <div class="form-group"><label>${t('nav_produits')}</label><select class="form-control" id="ap-prod" onchange="updateQuantiteLabel('ap-prod','ap-poids-label');updateApPreview()">${prodsOptsCat}</select></div>
-        <div class="form-group"><label id="ap-poids-label">${t('poids_kg')}</label><input type="number" class="form-control" id="ap-poids" value="100" step="0.1" min="0" oninput="updateApPreview()"></div>
-        <div id="ap-preview" class="num" style="font-size:.82rem;color:var(--muted);margin:-6px 0 12px;text-align:${lang==='ar'?'left':'right'}"></div>
-        <button class="btn btn-primary" style="width:100%" onclick="addLigne(${id})">+ ${t('ajouter_ligne')}</button>
+        <p style="color:var(--muted);font-size:.82rem;margin-bottom:12px">${t('choisir_produit_aide')}</p>
+        <button class="btn btn-primary" style="width:100%;padding:14px" onclick="openProduitPickerModal(${id})">🔩 ${t('choisir_produit')}</button>
       </div>
       <div class="table-card" style="padding:16px">
         <h4 style="margin-bottom:10px;font-size:.9rem;color:var(--gold)">+ ${t('ajouter_operation')}</h4>
@@ -626,7 +623,7 @@ async function viewFacture(id){
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:10px">
         <div>
           <h2 style="font-size:1.25rem;font-weight:900">${facture.numero}</h2>
-          <p style="color:var(--muted);font-size:.85rem;margin-top:4px">${facture.date_facture} · ${facture.client_nom||'—'}</p>
+          <p style="color:var(--muted);font-size:.85rem;margin-top:4px" class="num">${facture.date_facture}${facture.heure_vente?' · '+facture.heure_vente:''} · ${facture.client_nom||'—'}</p>
         </div>
         <div style="display:flex;gap:8px;align-items:center">
           <span class="badge dev-${facture.devise}">${facture.devise}</span>
@@ -667,7 +664,7 @@ async function viewFacture(id){
     ${histHTML}`;
 
   renderPaiementBlock('vente', id, canEdit);
-  if(canEdit){ updateApPreview(); updateAopPreview(); }
+  if(canEdit){ updateAopPreview(); }
 }
 
 async function renderPaiementBlock(ptype, facId, canEdit){
@@ -733,25 +730,82 @@ async function delPaiement(ptype, facId, paiementId){
   renderPaiementBlock(ptype, facId, true);
 }
 
-/** Construit les <option> des produits d'une categorie donnee, avec le prix
- * deja converti dans la devise de la facture (meme logique que le select plat
- * d'origine, juste filtree). */
-function buildProdOptsForCategory(prods, cle, dev){
-  const filtres = prods.filter(p=>((p.categorie && CATEGORIES[p.categorie])?p.categorie:'autre')===cle);
-  return filtres.map(p=>{
-    const prixConverti = dev==='USD' ? Math.round(((p.prix_vente_kg||0) / currentFactureCtx.taux) * 10000) / 10000 : (p.prix_vente_kg||0);
-    return `<option value="${p.id}" data-unite="${p.unite||'kg'}" data-prix="${prixConverti}">${lang==='ar'?p.nom_ar:p.nom_fr} (${p.dimension||''})</option>`;
-  }).join('');
+/** Picker en tuiles pour choisir un produit (categorie -> modele -> poids),
+ * dans le meme esprit visuel que Fer Magasin. Reutilise ap-prod/ap-poids/
+ * updateApPreview/addLigne tels quels via un select cache a une seule
+ * option, pour ne rien casser du flux d'ajout deja teste. */
+function openProduitPickerModal(facId){
+  modalCatSelectionnee = null;
+  renderProduitPickerModal(facId);
 }
-/** Quand la categorie change dans le formulaire d'ajout de produit : on
- * reconstruit uniquement la liste des modeles de cette categorie. */
-function onApCatChange(){
-  const catSelect = document.getElementById('ap-cat');
-  const prodSelect = document.getElementById('ap-prod');
-  if(!catSelect || !prodSelect) return;
-  prodSelect.innerHTML = buildProdOptsForCategory(currentProdsList, catSelect.value, currentFactureCtx.devise);
-  updateQuantiteLabel('ap-prod','ap-poids-label');
+function renderProduitPickerModal(facId){
+  const prods = currentProdsList;
+  const parCategorie = {};
+  prods.forEach(p=>{
+    const cle = (p.categorie && CATEGORIES[p.categorie]) ? p.categorie : 'autre';
+    if(!parCategorie[cle]) parCategorie[cle] = [];
+    parCategorie[cle].push(p);
+  });
+
+  if(!modalCatSelectionnee){
+    const catsHTML = Object.keys(parCategorie).length ? Object.keys(parCategorie).map(cle=>`
+      <button class="tile-btn" onclick="selectProduitPickerCategorie(${facId},'${cle}')">
+        <span class="tile-icon">${catIcon(cle)}</span>
+        ${catLabel(cle)}
+        <span class="tile-sub">${parCategorie[cle].length} ${lang==='ar'?'صنف':(lang==='fr'?'modèles':'models')}</span>
+      </button>
+    `).join('') : `<p style="grid-column:1/-1;text-align:center;color:var(--muted);padding:20px">${t('aucune_donnee')}</p>`;
+    showModal(`🔩 ${t('choisir_produit')}`, `<div class="tiles-grid">${catsHTML}</div>`, '', true);
+    return;
+  }
+
+  const produitsCat = parCategorie[modalCatSelectionnee] || [];
+  const dev = currentFactureCtx.devise;
+  const prodsHTML = produitsCat.length ? produitsCat.map(p=>{
+    const prixConverti = dev==='USD' ? Math.round(((p.prix_vente_kg||0) / currentFactureCtx.taux) * 10000) / 10000 : (p.prix_vente_kg||0);
+    const prixLabel = dev==='USD' ? fmtUSD(prixConverti) : fmt(prixConverti);
+    return `
+    <button class="tile-btn" onclick="selectProduitPickerProduit(${facId},${p.id})">
+      ${lang==='ar'?p.nom_ar:p.nom_fr}
+      <span class="tile-sub">${p.dimension||''}</span>
+      <span class="tile-prix">${prixLabel} ${devLabel(dev)}</span>
+    </button>`;
+  }).join('') : `<p style="grid-column:1/-1;text-align:center;color:var(--muted);padding:20px">${t('aucune_donnee')}</p>`;
+
+  showModal(`${catIcon(modalCatSelectionnee)} ${catLabel(modalCatSelectionnee)}`, `
+    <button class="btn btn-ghost btn-sm" style="margin-bottom:12px" onclick="retourProduitPickerCategories(${facId})">${lang==='ar'?'→':'←'} ${t('retour_categories')}</button>
+    <div class="tiles-grid">${prodsHTML}</div>
+  `, '', true);
+}
+function selectProduitPickerCategorie(facId, cle){
+  modalCatSelectionnee = cle;
+  renderProduitPickerModal(facId);
+}
+function retourProduitPickerCategories(facId){
+  modalCatSelectionnee = null;
+  renderProduitPickerModal(facId);
+}
+function selectProduitPickerProduit(facId, prodId){
+  const p = currentProdsList.find(x=>x.id===prodId);
+  if(!p) return;
+  const dev = currentFactureCtx.devise;
+  const prixConverti = dev==='USD' ? Math.round(((p.prix_vente_kg||0) / currentFactureCtx.taux) * 10000) / 10000 : (p.prix_vente_kg||0);
+  const unite = p.unite || 'kg';
+  const poidsDefaut = unite==='piece' ? 1 : 100;
+  const poidsStep = unite==='piece' ? 1 : 0.1;
+  const poidsLabel = unite==='piece' ? t('quantite_piece') : t('poids_kg');
+
+  showModal(`${lang==='ar'?p.nom_ar:p.nom_fr}${p.dimension?' ('+p.dimension+')':''}`, `
+    <button class="btn btn-ghost btn-sm" style="margin-bottom:12px" onclick="renderProduitPickerModal(${facId})">${t('retour')}</button>
+    <select id="ap-prod" style="display:none"><option value="${p.id}" data-unite="${unite}" data-prix="${prixConverti}" selected></option></select>
+    <div class="form-group"><label id="ap-poids-label">${poidsLabel}</label><input type="number" class="form-control" id="ap-poids" value="${poidsDefaut}" step="${poidsStep}" min="0" oninput="updateApPreview()" style="font-size:1.2rem;text-align:center"></div>
+    <div id="ap-preview" class="num" style="font-size:.92rem;color:var(--muted);margin:-4px 0 4px;text-align:${lang==='ar'?'left':'right'}"></div>
+  `, `
+    <button class="btn btn-primary" onclick="addLigne(${facId})">✓ ${t('ajouter')}</button>
+    <button class="btn btn-ghost" onclick="closeModalDirect()">${t('annuler')}</button>
+  `, true);
   updateApPreview();
+  setTimeout(()=>{ const inp=document.getElementById('ap-poids'); if(inp) inp.select(); }, 80);
 }
 
 function updateQuantiteLabel(selectId, labelId, inputId){
@@ -808,7 +862,12 @@ function updateAopPreview(){
 }
 
 async function addLigne(facId){
-  await api(`/factures/${facId}/ligne`,{method:'POST',body:JSON.stringify({produit_id:document.getElementById('ap-prod').value,poids_kg:document.getElementById('ap-poids').value})});
+  const poids = document.getElementById('ap-poids').value;
+  if(!poids || parseFloat(poids)<=0){ toast(t('champs_requis'), false); return; }
+  const res = await api(`/factures/${facId}/ligne`,{method:'POST',body:JSON.stringify({produit_id:document.getElementById('ap-prod').value,poids_kg:poids})});
+  if(res.error){ toast(res.error, false); return; }
+  closeModalDirect();
+  modalCatSelectionnee = null;
   toast(t('save_ok')); viewFacture(facId);
 }
 async function addOp(facId){
@@ -1249,6 +1308,17 @@ async function renderProduits(){
   document.getElementById('page-title').textContent=t('produits_list');
   document.getElementById('content').innerHTML=`<div class="empty-state"><div class="empty-icon">⏳</div></div>`;
   const prods=await api('/produits');
+  const tauxToday=await api('/taux-change/today');
+  const taux = (tauxToday && tauxToday.ls_par_usd) ? tauxToday.ls_par_usd : 1;
+  const devDefaut = appSettings.devise_defaut || 'USD';
+  // Les prix sont toujours STOCKES en ل.س (fiche produit inchangee), mais
+  // AFFICHES ici selon la devise par defaut choisie dans les Reglages -
+  // avec conversion en direct via le cours du jour, comme sur les factures.
+  const fmtPrix = (val) => {
+    if(!val) return '—';
+    if(devDefaut==='USD') return fmtUSD(val/taux)+' '+t('USD');
+    return fmt(val)+' '+t('LS');
+  };
   const cats={rond_beton:'🔩',tube:'🔲',plat:'▬',corniere:'📐',profile:'📏',treillis:'🔲'};
   const grouped={};
   prods.forEach(p=>{if(!grouped[p.categorie])grouped[p.categorie]=[];grouped[p.categorie].push(p);});
@@ -1269,8 +1339,8 @@ async function renderProduits(){
             <td><strong>${lang==='ar'?p.nom_ar:p.nom_fr}</strong></td>
             <td>${p.dimension||'—'}</td>
             <td><span class="badge" style="background:${p.unite==='piece'?'#dbe7ec':'#f3e6dc'};color:${p.unite==='piece'?'#2c6f8a':'var(--sea)'}">${uniteLabel}</span></td>
-            <td>${achat?fmt(achat)+' '+t('LS')+'/'+uniteSuffix:'—'}</td>
-            <td>${vente?fmt(vente)+' '+t('LS')+'/'+uniteSuffix:'—'}</td>
+            <td class="num">${fmtPrix(achat)}${achat?'/'+uniteSuffix:''}</td>
+            <td class="num">${fmtPrix(vente)}${vente?'/'+uniteSuffix:''}</td>
             <td>${marge!=='—'?marge+'%':'—'}</td>
             <td style="white-space:nowrap">
               <button class="btn btn-ghost btn-sm" onclick="editProdModal(${p.id})">✏️</button>
@@ -1283,8 +1353,18 @@ async function renderProduits(){
   document.getElementById('content').innerHTML=html;
 }
 
+let currentTauxForm = 1;
 function prodFormHTML(p={}){
   const unite = p.unite || 'kg';
+  const devDefaut = appSettings.devise_defaut || 'USD';
+  const suffixDev = devDefaut==='USD' ? t('USD') : t('LS');
+  // Les prix sont stockes en LS en base ; on affiche/saisit ici dans la devise
+  // par defaut choisie dans les Reglages, convertie via le cours du jour -
+  // la conversion inverse se fait a l'enregistrement (voir saveProd).
+  const toDisplay = (v) => {
+    if(!v) return '';
+    return devDefaut==='USD' ? (Math.round((v/currentTauxForm)*10000)/10000) : v;
+  };
   return `
     <div class="form-group"><label>الاسم بالعربية *</label><input class="form-control" id="p-ar" value="${p.nom_ar||''}" placeholder="حديد مسلح 10 ملم"></div>
     <div class="form-group"><label>Nom Français</label><input class="form-control" id="p-fr" value="${p.nom_fr||''}" placeholder="Rond à béton 10mm"></div>
@@ -1305,18 +1385,22 @@ function prodFormHTML(p={}){
       </select>
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-      <div class="form-group"><label id="p-achat-label">${t('prix_achat')} (${t('LS')}/${unite==='piece'?t('unite_piece_short'):t('kg')})</label><input type="number" class="form-control" id="p-achat" value="${p.prix_achat_kg||''}" step="50"></div>
-      <div class="form-group"><label id="p-vente-label">${t('prix_vente')} (${t('LS')}/${unite==='piece'?t('unite_piece_short'):t('kg')})</label><input type="number" class="form-control" id="p-vente" value="${p.prix_vente_kg||''}" step="50"></div>
+      <div class="form-group"><label id="p-achat-label">${t('prix_achat')} (${suffixDev}/${unite==='piece'?t('unite_piece_short'):t('kg')})</label><input type="number" class="form-control" id="p-achat" value="${toDisplay(p.prix_achat_kg)}" step="${devDefaut==='USD'?'0.0001':'50'}"></div>
+      <div class="form-group"><label id="p-vente-label">${t('prix_vente')} (${suffixDev}/${unite==='piece'?t('unite_piece_short'):t('kg')})</label><input type="number" class="form-control" id="p-vente" value="${toDisplay(p.prix_vente_kg)}" step="${devDefaut==='USD'?'0.0001':'50'}"></div>
     </div>`;
 }
 function updatePrixLabels(){
   const unite = document.getElementById('p-unite').value;
   const suffix = unite==='piece' ? t('unite_piece_short') : t('kg');
-  document.getElementById('p-achat-label').textContent = `${t('prix_achat')} (${t('LS')}/${suffix})`;
-  document.getElementById('p-vente-label').textContent = `${t('prix_vente')} (${t('LS')}/${suffix})`;
+  const devDefaut = appSettings.devise_defaut || 'USD';
+  const suffixDev = devDefaut==='USD' ? t('USD') : t('LS');
+  document.getElementById('p-achat-label').textContent = `${t('prix_achat')} (${suffixDev}/${suffix})`;
+  document.getElementById('p-vente-label').textContent = `${t('prix_vente')} (${suffixDev}/${suffix})`;
 }
 
-function addProdModal(){
+async function addProdModal(){
+  const tauxToday = await api('/taux-change/today');
+  currentTauxForm = (tauxToday && tauxToday.ls_par_usd) ? tauxToday.ls_par_usd : 1;
   showModal(t('nouveau_produit'), prodFormHTML(),
     `<button class="btn btn-primary" onclick="saveProd()">✓ ${t('sauvegarder')}</button><button class="btn btn-ghost" onclick="closeModalDirect()">${t('annuler')}</button>`);
 }
@@ -1324,18 +1408,26 @@ async function editProdModal(prodId){
   const prods = await api('/produits');
   const p = prods.find(x=>x.id===prodId);
   if(!p) return;
+  const tauxToday = await api('/taux-change/today');
+  currentTauxForm = (tauxToday && tauxToday.ls_par_usd) ? tauxToday.ls_par_usd : 1;
   showModal(t('modifier_produit'), prodFormHTML(p),
     `<button class="btn btn-primary" onclick="saveProd(${prodId})">✓ ${t('sauvegarder')}</button><button class="btn btn-ghost" onclick="closeModalDirect()">${t('annuler')}</button>`);
 }
 async function saveProd(prodId=null){
+  const devDefaut = appSettings.devise_defaut || 'USD';
+  const achatSaisi = parseFloat(document.getElementById('p-achat').value) || 0;
+  const venteSaisi = parseFloat(document.getElementById('p-vente').value) || 0;
+  // Les champs sont saisis dans la devise par defaut (voir prodFormHTML) mais
+  // toujours stockes en LS - on reconvertit ici avant l'envoi si besoin.
+  const toLS = (v) => devDefaut==='USD' ? Math.round(v*currentTauxForm) : v;
   const data = {
     nom_ar: document.getElementById('p-ar').value,
     nom_fr: document.getElementById('p-fr').value,
     categorie: document.getElementById('p-cat').value,
     dimension: document.getElementById('p-dim').value,
     unite: document.getElementById('p-unite').value,
-    prix_achat_kg: document.getElementById('p-achat').value || 0,
-    prix_vente_kg: document.getElementById('p-vente').value || 0,
+    prix_achat_kg: toLS(achatSaisi),
+    prix_vente_kg: toLS(venteSaisi),
   };
   if(prodId) await api(`/produits/${prodId}`,{method:'PUT',body:JSON.stringify(data)});
   else await api('/produits',{method:'POST',body:JSON.stringify(data)});
@@ -1688,9 +1780,46 @@ function renderMagasin(){
       <p style="color:var(--muted);font-size:.88rem;margin-bottom:14px">
         ${isAr?'اختر ملف JSON الذي تم تصديره من "متجر الحديد". سيتم إنشاء الفواتير والعملاء الجدد تلقائياً، بدون تكرار.':'Sélectionnez le fichier JSON exporté depuis "Fer Magasin". Les factures et nouveaux clients seront créés automatiquement, sans doublons.'}
       </p>
-      <input type="file" id="magasin-file" accept=".json" class="form-control" style="margin-bottom:12px">
+      <input type="file" id="magasin-file" accept=".json" class="form-control" style="margin-bottom:12px" onchange="previewVentesMagasin()">
+      <div id="magasin-preview" style="margin-bottom:12px"></div>
       <button class="btn btn-gold" onclick="importVentesMagasin()">📤 ${isAr?'استيراد':'Importer'}</button>
       <div id="magasin-result" style="margin-top:14px"></div>
+    </div>`;
+}
+
+let _magasinFileData = null;
+
+/** Apercu cote client des ventes contenues dans le fichier choisi, AVANT
+ * import : on veut voir QUOI (client, heure, montant), pas seulement COMBIEN. */
+async function previewVentesMagasin(){
+  const f = document.getElementById('magasin-file').files[0];
+  const previewDiv = document.getElementById('magasin-preview');
+  document.getElementById('magasin-result').innerHTML = '';
+  _magasinFileData = null;
+  if(!f){ previewDiv.innerHTML = ''; return; }
+
+  const isAr = lang==='ar';
+  const text = await f.text();
+  let data;
+  try{ data = JSON.parse(text); } catch(e){
+    previewDiv.innerHTML = `<div class="alert alert-danger">${isAr?'ملف غير صالح':'Fichier invalide'}</div>`;
+    return;
+  }
+  _magasinFileData = data;
+  const ventes = data.ventes || [];
+  if(!ventes.length){
+    previewDiv.innerHTML = `<div class="alert alert-warn">${isAr?'لا توجد عمليات بيع في هذا الملف':'Aucune vente dans ce fichier'}</div>`;
+    return;
+  }
+  const rowsHTML = ventes.map(v=>`
+    <div class="prix-row">
+      <span>${v.client_nom||'—'} <span class="num" style="color:var(--muted);font-size:.76rem">${v.date_vente||''}${v.heure_vente?' · '+v.heure_vente:''}</span></span>
+      <span class="prix-val">${fmt(v.total)} ${t(v.devise||'LS')}</span>
+    </div>`).join('');
+  previewDiv.innerHTML = `
+    <div class="table-card">
+      <div class="table-header"><h3>${isAr?`معاينة: ${ventes.length} عملية بيع`:`Aperçu : ${ventes.length} vente(s)`}</h3></div>
+      <div style="max-height:280px;overflow-y:auto">${rowsHTML}</div>
     </div>`;
 }
 
@@ -1707,28 +1836,66 @@ async function exportCatalogueMagasin(){
 }
 
 async function importVentesMagasin(){
-  const f = document.getElementById('magasin-file').files[0];
   const resultDiv = document.getElementById('magasin-result');
-  if(!f){ toast(lang==='ar'?'اختر ملفاً':'Sélectionnez un fichier', false); return; }
-
-  const text = await f.text();
-  let data;
-  try{ data = JSON.parse(text); } catch(e){
-    toast(lang==='ar'?'ملف غير صالح':'Fichier invalide', false); return;
+  let data = _magasinFileData;
+  if(!data){
+    const f = document.getElementById('magasin-file').files[0];
+    if(!f){ toast(lang==='ar'?'اختر ملفاً':'Sélectionnez un fichier', false); return; }
+    const text = await f.text();
+    try{ data = JSON.parse(text); } catch(e){
+      toast(lang==='ar'?'ملف غير صالح':'Fichier invalide', false); return;
+    }
   }
 
   const res = await api('/magasin/import-ventes', {method:'POST', body: JSON.stringify(data)});
   if(res.error){ toast(res.error, false); return; }
 
   const isAr = lang==='ar';
+  const detailHTML = (res.detail||[]).length ? `
+    <div class="table-card" style="margin-top:10px">
+      <div style="max-height:240px;overflow-y:auto">
+        ${res.detail.map(d=>`
+          <div class="prix-row">
+            <span>${d.numero} — ${d.client_nom||'—'} <span class="num" style="color:var(--muted);font-size:.76rem">${d.date_facture}${d.heure_vente?' · '+d.heure_vente:''}</span></span>
+            <span class="prix-val">${fmt(d.total)} ${t(d.devise)}</span>
+          </div>`).join('')}
+      </div>
+    </div>` : '';
+
   resultDiv.innerHTML = `
     <div class="alert alert-success">
       ✓ ${isAr?`تم استيراد ${res.importees} عملية بيع`:`${res.importees} vente(s) importée(s)`}<br>
       ${res.clients_crees>0 ? (isAr?`${res.clients_crees} عميل جديد تم إنشاؤه<br>`:`${res.clients_crees} nouveau(x) client(s) créé(s)<br>`) : ''}
       ${res.ignorees_doublon>0 ? (isAr?`${res.ignorees_doublon} تم تجاهلها (مستوردة مسبقاً)`:`${res.ignorees_doublon} ignorée(s) (déjà importée(s))`) : ''}
-    </div>`;
+    </div>
+    ${detailHTML}`;
   toast(t('save_ok'));
 }
+
+// ═══════════════════════════════════════════════════════════
+//  PRESERVATION DU DEFILEMENT
+//  A chaque fois qu'une page se recharge (suppression, sauvegarde, etc.),
+//  on reste au meme endroit au lieu de remonter en haut - sauf lors d'une
+//  vraie navigation (clic dans le menu), ou l'on revient logiquement en haut.
+//  Un seul mecanisme central : s'applique automatiquement a TOUTES les pages,
+//  sans avoir a modifier chaque fonction de rendu individuellement.
+// ═══════════════════════════════════════════════════════════
+(function setupScrollPreservation(){
+  const content = document.getElementById('content');
+  if(!content) return;
+  let lastScrollTop = 0;
+  let forceTop = false;
+
+  const observer = new MutationObserver(()=>{
+    content.scrollTop = forceTop ? 0 : lastScrollTop;
+    forceTop = false;
+  });
+  observer.observe(content, {childList:true});
+
+  content.addEventListener('scroll', ()=>{ lastScrollTop = content.scrollTop; });
+
+  window.resetContentScroll = function(){ forceTop = true; };
+})();
 
 // ═══════════════════════════════════════════════════════════
 //  INIT

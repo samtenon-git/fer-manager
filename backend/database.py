@@ -110,6 +110,9 @@ def init_db():
         date_paiement TEXT,              -- date a laquelle le paiement a ete recu
         taux_paiement REAL,              -- taux du jour du paiement (pour affichage informatif)
         export_uid_magasin TEXT,         -- identifiant unique si importee depuis Fer Magasin (anti-doublon)
+        heure_vente TEXT,                -- heure reelle de la vente (HH:MM) - capturee a la creation,
+                                          -- ou recuperee depuis Fer Magasin si importee (distinct de created_at
+                                          -- qui, pour une facture importee, ne refleterait que l'heure d'import)
         note TEXT,
         created_at TEXT DEFAULT (datetime('now')),
         updated_at TEXT DEFAULT (datetime('now')),
@@ -410,6 +413,12 @@ def _migrate_if_needed(conn, c):
             c.execute("ALTER TABLE factures ADD COLUMN export_uid_magasin TEXT")
         except Exception as e:
             print(f"Migration export_uid_magasin: {e}")
+
+    if 'heure_vente' not in cols:
+        try:
+            c.execute("ALTER TABLE factures ADD COLUMN heure_vente TEXT")
+        except Exception as e:
+            print(f"Migration heure_vente: {e}")
 
     # Table facture_lignes_libres (creee par le CREATE TABLE IF NOT EXISTS plus haut,
     # mais on s'assure qu'elle existe meme si la base est tres ancienne)

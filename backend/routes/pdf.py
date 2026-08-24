@@ -1,12 +1,31 @@
 from flask import Blueprint, send_file, abort
 import io
 
+# Playwright (Chromium headless) au lieu de WeasyPrint : WeasyPrint a besoin de
+# bibliotheques systeme (GTK/Cairo/Pango) simples a installer via apt sous Linux
+# (voir Dockerfile) mais penibles sous Windows natif - d'ou le PDF desactive en
+# mode developpement jusqu'ici. Playwright s'installe pareil des deux cotes :
+# `pip install playwright` puis `playwright install chromium`, sans etape
+# systeme separee a gerer manuellement sous Windows.
 try:
-    from weasyprint import HTML
-    WEASYPRINT_OK = True
-except Exception:
-    HTML = None
-    WEASYPRINT_OK = False
+    from playwright.sync_api import sync_playwright
+    PDF_OK = True
+    _PDF_ERROR = None
+except Exception as e:
+    sync_playwright = None
+    PDF_OK = False
+    _PDF_ERROR = str(e)
+
+def _html_to_pdf_bytes(html_content):
+    """Convertit du HTML en PDF via Chromium headless (rendu identique a un
+    navigateur reel, polices Google Fonts chargees normalement)."""
+    with sync_playwright() as p:
+        browser = p.chromium.launch()
+        page = browser.new_page()
+        page.set_content(html_content, wait_until='networkidle')
+        pdf_bytes = page.pdf(format='A4', print_background=True, margin={'top':'0','bottom':'0','left':'0','right':'0'})
+        browser.close()
+    return pdf_bytes
 
 pdf_bp = Blueprint('pdf', __name__)
 
@@ -117,8 +136,14 @@ TEMPLATE = """
 
 @pdf_bp.route('/factures/<int:fac_id>/pdf')
 def generate_pdf(fac_id):
-    if not WEASYPRINT_OK:
-        return "<h2>PDF non disponible en mode développement Windows.<br>Disponible uniquement sur le serveur Tartous.</h2>", 503
+    if not PDF_OK:
+        return (
+            "<h2>Génération PDF indisponible.</h2>"
+            "<p>Il manque Playwright ou son navigateur Chromium. "
+            "Dans un terminal, lancez :</p>"
+            "<pre>pip install playwright\nplaywright install chromium</pre>"
+            f"<p style='color:#999;font-size:12px'>Détail technique : {_PDF_ERROR}</p>"
+        ), 503
 
     from database import get_db
     db = get_db()
@@ -153,7 +178,15 @@ def generate_pdf(fac_id):
         operations=[dict(o) for o in ops],
         statut_label=statut_map.get(fac['statut'], fac['statut'])
     )
-    pdf_bytes = HTML(string=html_str).write_pdf()
+    try:
+        pdf_bytes = _html_to_pdf_bytes(html_str)
+    except Exception as e:
+        return (
+            "<h2>Erreur lors de la génération du PDF.</h2>"
+            f"<pre>{e}</pre>"
+            "<p>Si Chromium n'a jamais été téléchargé, lancez : "
+            "<code>playwright install chromium</code></p>"
+        ), 500
     return send_file(
         io.BytesIO(pdf_bytes),
         mimetype='application/pdf',

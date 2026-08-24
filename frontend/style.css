@@ -167,6 +167,20 @@ div[style*="overflow-x:auto"]{-webkit-overflow-scrolling:touch;}
    ═══════════════════════════════════════════ */
 .modal-overlay{position:fixed; inset:0; background:rgba(20,15,12,.5); z-index:200; display:flex; align-items:center; justify-content:center; padding:16px;}
 .modal{background:white; border-radius:14px; width:100%; max-width:480px; max-height:90vh; overflow-y:auto; box-shadow:var(--shadow-lg);}
+.modal.modal-wide{max-width:640px;}
+.tiles-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(130px,1fr)); gap:10px;}
+.tile-btn{
+  background:white; border:2px solid var(--border); border-radius:10px;
+  padding:14px 10px; text-align:center; cursor:pointer;
+  transition:all .15s; font-size:.86rem; font-weight:700; color:var(--ink);
+  min-height:80px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:5px;
+  font-family:inherit;
+}
+.tile-btn:hover{border-color:var(--sea); background:#fdf6f2; transform:translateY(-1px);}
+.tile-btn .tile-icon{font-size:1.5rem;}
+.tile-btn .tile-sub{font-size:.72rem; color:var(--muted); font-weight:500;}
+.tile-btn .tile-prix{font-size:.7rem; color:var(--sea); font-weight:800; font-family:var(--font-num);}
+.tile-btn.local{border-style:dashed;}
 .modal-header{padding:17px 20px 13px; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center;}
 .modal-header h3{font-size:.95rem; font-weight:700;}
 .modal-close{background:none; border:none; font-size:1.2rem; cursor:pointer; color:var(--muted); transition:color .15s;}

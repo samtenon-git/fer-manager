@@ -334,6 +334,7 @@ def create_facture():
     data = request.json
     db = get_db()
     today = date.today().isoformat()
+    heure = datetime.now().strftime('%H:%M')
     taux_row = db.execute("SELECT ls_par_usd FROM taux_change WHERE date <= ? ORDER BY date DESC LIMIT 1", (today,)).fetchone()
     taux = taux_row[0] if taux_row else 1
 
@@ -343,9 +344,9 @@ def create_facture():
 
     numero = _next_numero(db, 'factures', 'FAC')
     db.execute(
-        """INSERT INTO factures (numero, client_id, date_facture, prix_fer_jour, devise, taux_change, statut)
-           VALUES (?,?,?,0,?,?,'brouillon')""",
-        (numero, data.get('client_id'), today, devise, taux)
+        """INSERT INTO factures (numero, client_id, date_facture, prix_fer_jour, devise, taux_change, statut, heure_vente)
+           VALUES (?,?,?,0,?,?,'brouillon',?)""",
+        (numero, data.get('client_id'), today, devise, taux, heure)
     )
     fac_id = db.execute("SELECT last_insert_rowid()").fetchone()[0]
     _log_hist(db, 'facture_historique', 'facture_id', fac_id, 'creation', nouvelle=f'Facture {numero} créée')
@@ -1204,6 +1205,7 @@ def import_ventes_magasin():
     importees = 0
     ignorees_doublon = 0
     clients_crees = 0
+    detail_importees = []
 
     for v in ventes:
         export_uid = v.get('export_uid')
@@ -1232,6 +1234,7 @@ def import_ventes_magasin():
 
         numero = _next_numero(db, 'factures', 'FAC')
         date_facture = v.get('date_vente') or date.today().isoformat()
+        heure_vente = v.get('heure_vente', '')
         prix_fer_jour = v.get('prix_fer_jour', 0)
         devise = v.get('devise', 'LS')
         total = v.get('total', 0)
@@ -1241,12 +1244,16 @@ def import_ventes_magasin():
         db.execute(
             """INSERT INTO factures
                (numero, client_id, date_facture, prix_fer_jour, devise, taux_change,
-                sous_total_fer, sous_total_lignes_libres, total, statut, export_uid_magasin, note)
-               VALUES (?,?,?,?,?,1,?,?,?,'validee',?,?)""",
+                sous_total_fer, sous_total_lignes_libres, total, statut, export_uid_magasin, note, heure_vente)
+               VALUES (?,?,?,?,?,1,?,?,?,'validee',?,?,?)""",
             (numero, client_id, date_facture, prix_fer_jour, devise, sous_total_fer, sous_total_ll, total,
-             export_uid, 'Importee depuis Fer Magasin')
+             export_uid, 'Importee depuis Fer Magasin', heure_vente)
         )
         fac_id = db.execute("SELECT last_insert_rowid()").fetchone()[0]
+        detail_importees.append({
+            'numero': numero, 'client_nom': client_nom, 'date_facture': date_facture,
+            'heure_vente': heure_vente, 'total': total, 'devise': devise
+        })
 
         for l in v.get('lignes', []):
             db.execute(
@@ -1283,7 +1290,8 @@ def import_ventes_magasin():
         'ok': True,
         'importees': importees,
         'ignorees_doublon': ignorees_doublon,
-        'clients_crees': clients_crees
+        'clients_crees': clients_crees,
+        'detail': detail_importees
     })
 
 # ══════════════════════════════════════════════
