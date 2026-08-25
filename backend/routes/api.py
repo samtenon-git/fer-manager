@@ -1352,11 +1352,22 @@ def import_ventes_magasin():
         })
 
         for l in v.get('lignes', []):
+            # Un produit_id venant de Fer Magasin peut correspondre a un
+            # produit AJOUTE LOCALEMENT en boutique, jamais synchronise vers
+            # Fer Manager - son id n'existe alors pas ici. On verifie avant
+            # d'inserer : si absent, on garde la ligne (description + prix
+            # deja "snapshotes") mais avec produit_id=NULL, plutot que de
+            # planter sur la contrainte de cle etrangere et perdre toute la vente.
+            produit_id = l.get('produit_id')
+            if produit_id is not None:
+                existe_produit = db.execute("SELECT 1 FROM produits WHERE id=?", (produit_id,)).fetchone()
+                if not existe_produit:
+                    produit_id = None
             db.execute(
                 """INSERT INTO facture_lignes
                    (facture_id, produit_id, description_fr, description_ar, poids_kg, prix_kg, sous_total)
                    VALUES (?,?,?,?,?,?,?)""",
-                (fac_id, l.get('produit_id'), l.get('description_fr'), l.get('description_ar'),
+                (fac_id, produit_id, l.get('description_fr'), l.get('description_ar'),
                  l.get('poids_kg', 0), l.get('prix_kg', 0), l.get('sous_total', 0))
             )
 

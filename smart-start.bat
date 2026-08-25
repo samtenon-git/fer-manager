@@ -7,6 +7,22 @@ echo   DEMARRAGE INTELLIGENT - Gestion Fer
 echo ================================================
 echo.
 
+REM --- Nettoyage prealable : garantir qu'une seule instance tourne ---
+REM Avec "restart: unless-stopped" sur le conteneur Docker, une ancienne
+REM instance peut redemarrer toute seule (Windows/Docker Desktop redemarre)
+REM SANS que ca se voie. Si elle tourne en meme temps qu'une instance Python
+REM lancee separement, les deux ecrivent dans le MEME fichier data\fer.db,
+REM ce qui cause des erreurs "database is locked" constantes. On repart donc
+REM toujours d'un etat propre avant de choisir un mode.
+echo [0/2] Nettoyage des instances existantes...
+taskkill /F /IM python.exe >nul 2>&1
+docker info >nul 2>&1
+if not errorlevel 1 (
+    docker compose down >nul 2>&1
+)
+echo    OK.
+echo.
+
 REM --- Detection : Docker est-il installe ET fonctionnel ? ---
 echo [1/2] Detection de l'environnement...
 docker info >nul 2>&1

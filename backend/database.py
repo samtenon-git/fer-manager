@@ -6,10 +6,42 @@ import random
 DB_PATH = os.environ.get('DATABASE_PATH', './data/fer.db')
 
 def get_db():
-    conn = sqlite3.connect(DB_PATH)
+    conn = sqlite3.connect(DB_PATH, timeout=15)
     conn.row_factory = sqlite3.Row
     conn.execute("PRAGMA foreign_keys = ON")
+    # Suivi de la connexion pour garantir sa fermeture en fin de requete (voir
+    # close_db plus bas). Sans ca, une route qui plante avant d'avoir appele
+    # db.close() laisse la connexion ouverte, potentiellement avec une
+    # transaction en cours -> toutes les requetes suivantes echouent avec
+    # "database is locked", jusqu'au redemarrage complet de l'application
+    # (exactement ce qui se produit dans les logs : les tentatives repetees
+    # apres le premier plantage FOREIGN KEY tombent toutes sur ce blocage).
+    try:
+        from flask import g
+        conns = g.get('_db_conns', [])
+        conns.append(conn)
+        g._db_conns = conns
+    except RuntimeError:
+        pass  # appel hors contexte Flask (scripts de migration, tests) - pas grave
     return conn
+
+def close_db(exception=None):
+    """A appeler via app.teardown_appcontext : ferme (avec rollback si la
+    requete s'est terminee en erreur) TOUTES les connexions ouvertes durant
+    cette requete, meme celles qu'une route n'a pas explicitement fermees
+    suite a une exception."""
+    from flask import g
+    conns = g.pop('_db_conns', [])
+    for conn in conns:
+        try:
+            if exception is not None:
+                conn.rollback()
+        except Exception:
+            pass
+        try:
+            conn.close()
+        except Exception:
+            pass
 
 def init_db():
     conn = get_db()

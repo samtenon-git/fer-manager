@@ -11,7 +11,6 @@ try:
 except ImportError as e:
     print(f"ERREUR: Un module Python manque : {e}")
     print("Lancez : python -m pip install flask flask-cors python-dateutil")
-    input("Appuyez sur Entree pour fermer...")
     sys.exit(1)
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -22,12 +21,10 @@ print(f"[OK] Dossier frontend : {FRONTEND_DIR}")
 
 if not os.path.exists(FRONTEND_DIR):
     print(f"ERREUR: Le dossier frontend n'existe pas : {FRONTEND_DIR}")
-    input("Appuyez sur Entree pour fermer...")
     sys.exit(1)
 
 if not os.path.exists(os.path.join(FRONTEND_DIR, 'index.html')):
     print(f"ERREUR: index.html introuvable dans {FRONTEND_DIR}")
-    input("Appuyez sur Entree pour fermer...")
     sys.exit(1)
 
 app = Flask(__name__)
@@ -40,7 +37,6 @@ except Exception as e:
     print(f"ERREUR lors du chargement de routes/api.py : {e}")
     import traceback
     traceback.print_exc()
-    input("Appuyez sur Entree pour fermer...")
     sys.exit(1)
 
 try:
@@ -50,7 +46,6 @@ except Exception as e:
     print(f"ERREUR lors du chargement de routes/pdf.py : {e}")
     import traceback
     traceback.print_exc()
-    input("Appuyez sur Entree pour fermer...")
     sys.exit(1)
 
 app.register_blueprint(api, url_prefix='/api')
@@ -87,13 +82,13 @@ def serve_file(path):
     return send_from_directory(FRONTEND_DIR, 'index.html')
 
 try:
-    from database import init_db
+    from database import init_db, close_db
+    app.teardown_appcontext(close_db)
     print("[OK] Module database.py charge")
 except Exception as e:
     print(f"ERREUR lors du chargement de database.py : {e}")
     import traceback
     traceback.print_exc()
-    input("Appuyez sur Entree pour fermer...")
     sys.exit(1)
 
 with app.app_context():
@@ -114,7 +109,6 @@ with app.app_context():
         print(f"ERREUR lors de l'initialisation de la base de donnees : {e}")
         import traceback
         traceback.print_exc()
-        input("Appuyez sur Entree pour fermer...")
         sys.exit(1)
 
 print("=" * 50)
@@ -126,9 +120,18 @@ print("=" * 50)
 if __name__ == '__main__':
     try:
         app.run(host='0.0.0.0', port=5000, debug=False)
+    except OSError as e:
+        # Cas frequent : une autre instance (Docker ou Python) tourne deja et
+        # ecrit dans le meme fichier data\fer.db - c'est la cause la plus
+        # courante des erreurs "database is locked" persistantes. Message
+        # explicite au lieu d'un simple crash muet.
+        print(f"ERREUR: impossible de demarrer sur le port 5000 : {e}")
+        print("Une autre instance de Fer Manager tourne peut-etre deja")
+        print("(verifiez Docker avec 'docker ps', et le Gestionnaire des taches pour python.exe).")
+        print("Lancez stop.bat puis reessayez.")
+        sys.exit(1)
     except Exception as e:
         print(f"ERREUR au demarrage du serveur : {e}")
         import traceback
         traceback.print_exc()
-        input("Appuyez sur Entree pour fermer...")
         sys.exit(1)
