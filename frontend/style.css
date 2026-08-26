@@ -132,6 +132,7 @@ body.ltr table.data th{text-align:left;}
 table.data td{padding:11px 14px; border-bottom:1px solid #f1ece2; font-size:.85rem; vertical-align:middle; font-variant-numeric:tabular-nums;}
 table.data tr:last-child td{border-bottom:none;}
 table.data tr:hover td{background:#faf7f2;}
+table.data tr.row-clickable{cursor:pointer;}
 
 .table-scroll{overflow-x:auto; -webkit-overflow-scrolling:touch;}
 div[style*="overflow-x:auto"]{-webkit-overflow-scrolling:touch;}

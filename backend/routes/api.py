@@ -560,18 +560,39 @@ def reactiver_facture(fac_id):
 
 @api.route('/factures/<int:fac_id>', methods=['DELETE'])
 def delete_facture(fac_id):
-    """Suppression réelle - uniquement autorisée sur brouillon pour éviter la perte de traçabilité."""
+    """Suppression reelle, quel que soit le statut (brouillon, validee ou
+    annulee). Les paiements associes sont nettoyes explicitement : la table
+    paiements n'a pas de contrainte de cle etrangere (elle sert aussi bien aux
+    ventes qu'aux achats), donc ils ne seraient pas supprimes automatiquement
+    et resteraient orphelins."""
     db = get_db()
-    fac = db.execute("SELECT statut FROM factures WHERE id=?", (fac_id,)).fetchone()
+    fac = db.execute("SELECT id FROM factures WHERE id=?", (fac_id,)).fetchone()
     if not fac:
         db.close()
         return jsonify({'error': 'not found'}), 404
-    if fac['statut'] == 'validee':
-        db.close()
-        return jsonify({'error': 'Impossible de supprimer une facture validée. Annulez-la plutôt.'}), 400
+    db.execute("DELETE FROM paiements WHERE type='vente' AND facture_id=?", (fac_id,))
     db.execute("DELETE FROM factures WHERE id=?", (fac_id,))
     db.commit(); db.close()
     return jsonify({'ok': True})
+
+@api.route('/factures/delete-bulk', methods=['POST'])
+def delete_factures_bulk():
+    """Suppression de plusieurs factures en une fois (selection multiple dans
+    la liste des ventes)."""
+    data = request.json or {}
+    ids = data.get('ids', [])
+    if not ids or not isinstance(ids, list):
+        return jsonify({'error': 'Aucune facture sélectionnée'}), 400
+    db = get_db()
+    supprimees = 0
+    for fac_id in ids:
+        fac = db.execute("SELECT id FROM factures WHERE id=?", (fac_id,)).fetchone()
+        if fac:
+            db.execute("DELETE FROM paiements WHERE type='vente' AND facture_id=?", (fac_id,))
+            db.execute("DELETE FROM factures WHERE id=?", (fac_id,))
+            supprimees += 1
+    db.commit(); db.close()
+    return jsonify({'ok': True, 'supprimees': supprimees})
 
 @api.route('/factures/<int:fac_id>/ligne/<int:ligne_id>', methods=['DELETE'])
 def delete_ligne(fac_id, ligne_id):
@@ -1337,12 +1358,21 @@ def import_ventes_magasin():
         sous_total_ll = sum(l.get('montant', 0) for l in v.get('lignes_libres', []))
         sous_total_fer = total - sous_total_ll
 
+        # Cours du jour reel pour cette date - AVANT l'insertion, pour ne
+        # jamais stocker de valeur bidon (l'ancien code inserait litteralement
+        # 1 en dur ici, d'ou un "cours" absurde affiche sur les factures
+        # importees depuis Fer Magasin).
+        taux_row = db.execute(
+            "SELECT ls_par_usd FROM taux_change WHERE date <= ? ORDER BY date DESC LIMIT 1", (date_facture,)
+        ).fetchone()
+        taux = taux_row['ls_par_usd'] if taux_row else 1
+
         db.execute(
             """INSERT INTO factures
                (numero, client_id, date_facture, prix_fer_jour, devise, taux_change,
                 sous_total_fer, sous_total_lignes_libres, total, statut, export_uid_magasin, note, heure_vente)
-               VALUES (?,?,?,?,?,1,?,?,?,'validee',?,?,?)""",
-            (numero, client_id, date_facture, prix_fer_jour, devise, sous_total_fer, sous_total_ll, total,
+               VALUES (?,?,?,?,?,?,?,?,?,'validee',?,?,?)""",
+            (numero, client_id, date_facture, prix_fer_jour, devise, taux, sous_total_fer, sous_total_ll, total,
              export_uid, 'Importee depuis Fer Magasin', heure_vente)
         )
         fac_id = db.execute("SELECT last_insert_rowid()").fetchone()[0]
@@ -1377,13 +1407,37 @@ def import_ventes_magasin():
                 (fac_id, ll.get('description', ''), ll.get('montant', 0))
             )
 
-        # Recalcul du montant_du_usd pour cette facture
-        taux_row = db.execute(
-            "SELECT ls_par_usd FROM taux_change WHERE date <= ? ORDER BY date DESC LIMIT 1", (date_facture,)
-        ).fetchone()
-        taux = taux_row['ls_par_usd'] if taux_row else 1
+        # montant_du_usd reutilise le meme taux deja calcule plus haut (pas de
+        # nouvelle lecture, garantit une coherence totale avec taux_change
+        # stocke sur la facture elle-meme)
         montant_usd = round(total, 2) if devise == 'USD' else round(total / taux, 2) if taux else 0
         db.execute("UPDATE factures SET montant_du_usd=? WHERE id=?", (montant_usd, fac_id))
+
+        # Si le vendeur a indique dans Fer Magasin que la vente a ete payee
+        # integralement au comptoir, on enregistre directement le paiement
+        # correspondant ici - pas besoin de revenir dans Manager juste pour
+        # marquer un encaissement deja recu en boutique. Meme logique pour un
+        # acompte partiel recu sur une vente laissee "a credit" (avant, ce
+        # cas etait ignore et la vente arrivait toujours avec un solde egal
+        # au total, meme si une partie avait deja ete payee au comptoir).
+        acompte = v.get('acompte_recu', 0) or 0
+        if v.get('statut_paiement') == 'paye' and montant_usd > 0.005:
+            db.execute(
+                """INSERT INTO paiements (type, facture_id, montant, devise, taux_change, montant_usd, date_paiement, note)
+                   VALUES ('vente', ?, ?, 'USD', ?, ?, ?, ?)""",
+                (fac_id, montant_usd, taux, montant_usd, date_facture, 'Payé en boutique (Fer Magasin)')
+            )
+            _sync_statut(db, 'vente', fac_id)
+        elif acompte > 0.005:
+            acompte_usd = round(acompte, 2) if devise == 'USD' else round(acompte / taux, 2) if taux else 0
+            acompte_usd = min(acompte_usd, montant_usd)  # securite anti-depassement
+            if acompte_usd > 0.005:
+                db.execute(
+                    """INSERT INTO paiements (type, facture_id, montant, devise, taux_change, montant_usd, date_paiement, note)
+                       VALUES ('vente', ?, ?, 'USD', ?, ?, ?, ?)""",
+                    (fac_id, acompte_usd, taux, acompte_usd, date_facture, 'Acompte reçu en boutique (Fer Magasin)')
+                )
+                _sync_statut(db, 'vente', fac_id)
 
         _log_hist(db, 'facture_historique', 'facture_id', fac_id, 'import_magasin',
                    nouvelle=f"Importee depuis Fer Magasin (uid: {export_uid[:8]}...)")

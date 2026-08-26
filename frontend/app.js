@@ -24,7 +24,7 @@ const TR = {
     fournisseurs_list:"Fournisseurs", nouveau_fournisseur:"Nouveau fournisseur",
     nom:"Nom", telephone:"Téléphone", email:"Email", adresse:"Adresse", note:"Note",
     sauvegarder:"Sauvegarder", annuler:"Annuler", fermer:"Fermer",
-    taux_du_jour:"Cours du jour (ل.س pour 1$)", historique_taux:"Historique du cours",
+    taux_du_jour:"Cours du jour (ل.س pour 1$)", historique_taux:"Historique du cours", mettre_a_jour_taux:"Mettre à jour",
     produits_list:"Catalogue produits", nouveau_produit:"Nouveau produit",
     categorie:"Catégorie", dimension:"Dimension", stock_actuel:"Stock (kg)",
     alerte_min:"Alerte mini (kg)", inventaire_title:"Inventaire",
@@ -89,7 +89,7 @@ const TR = {
     fournisseurs_list:"التجار", nouveau_fournisseur:"تاجر جديد",
     nom:"الاسم", telephone:"الهاتف", email:"البريد الإلكتروني", adresse:"العنوان", note:"ملاحظة",
     sauvegarder:"حفظ", annuler:"إلغاء", fermer:"إغلاق",
-    taux_du_jour:"سعر اليوم (ل.س مقابل 1$)", historique_taux:"سجل سعر الصرف",
+    taux_du_jour:"سعر اليوم (ل.س مقابل 1$)", historique_taux:"سجل سعر الصرف", mettre_a_jour_taux:"تحديث",
     produits_list:"كتالوج المنتجات", nouveau_produit:"منتج جديد",
     categorie:"الفئة", dimension:"القياس", stock_actuel:"المخزون (كغ)",
     alerte_min:"حد التنبيه (كغ)", inventaire_title:"المخزون",
@@ -154,7 +154,7 @@ const TR = {
     fournisseurs_list:"Suppliers", nouveau_fournisseur:"New supplier",
     nom:"Name", telephone:"Phone", email:"Email", adresse:"Address", note:"Note",
     sauvegarder:"Save", annuler:"Cancel", fermer:"Close",
-    taux_du_jour:"Today rate (SYP per 1$)", historique_taux:"Rate history",
+    taux_du_jour:"Today rate (SYP per 1$)", historique_taux:"Rate history", mettre_a_jour_taux:"Update",
     produits_list:"Products", nouveau_produit:"New product",
     categorie:"Category", dimension:"Dimension", stock_actuel:"Stock (kg)",
     alerte_min:"Min alert (kg)", inventaire_title:"Inventory",
@@ -220,7 +220,6 @@ async function loadCategories(){
 }
 function catLabel(cle){ return (CATEGORIES[cle] || CATEGORIES.autre)[lang]; }
 function catIcon(cle){ return (CATEGORIES[cle] || CATEGORIES.autre).icon; }
-let modalCatSelectionnee = null;
 
 async function loadAppSettings(){
   try {
@@ -421,32 +420,71 @@ async function renderFactures(){
   const facs=await api('/factures?limit=100');
   const payBadgeClass = {en_attente:'brouillon', partiellement_paye:'dev-USD', paye:'validee'};
   const rows=facs.map(f=>`
-    <tr>
+    <tr class="row-clickable" onclick="viewFacture(${f.id})">
+      <td onclick="event.stopPropagation()"><input type="checkbox" class="fac-check" value="${f.id}" onchange="updateBulkDeleteBar()"></td>
       <td><strong>${f.numero}</strong></td>
       <td>${f.client_nom||'—'}</td>
       <td class="num">${f.date_facture}${f.heure_vente?`<br><span style="color:var(--muted);font-size:.76rem">${f.heure_vente}</span>`:''}</td>
       <td>${fmtMoneyDualInline(f.montant_du_usd, f.taux_change)}</td>
       <td><span class="badge ${f.statut}">${t(f.statut)}</span></td>
       <td>${f.statut!=='annulee' ? `<span class="badge ${payBadgeClass[f.statut_paiement]}">${t('paiement_'+f.statut_paiement)}</span>${f.statut_paiement!=='paye'?`<div class="num" style="font-size:.72rem;color:var(--muted);margin-top:3px">${t('solde_restant')}: ${fmtUSD(f.solde_usd)} ${t('USD')}</div>`:''}` : '—'}</td>
-      <td style="white-space:nowrap">
+      <td style="white-space:nowrap" onclick="event.stopPropagation()">
         <button class="btn btn-ghost btn-sm" onclick="viewFacture(${f.id})">👁</button>
         <a class="btn btn-primary btn-sm" href="/api/factures/${f.id}/pdf" target="_blank">📥</a>
+        <button class="btn btn-danger btn-sm" onclick="deleteFacModal(${f.id})">🗑</button>
       </td>
-    </tr>`).join('') || `<tr><td colspan="7"><div class="empty-state"><div class="empty-icon">📄</div><p>${t('aucune_donnee')}</p></div></td></tr>`;
+    </tr>`).join('') || `<tr><td colspan="8"><div class="empty-state"><div class="empty-icon">📄</div><p>${t('aucune_donnee')}</p></div></td></tr>`;
 
   document.getElementById('content').innerHTML=`
     <div class="table-card">
       <div class="table-header">
         <h3>${t('factures_list')}</h3>
-        <button class="btn btn-primary" onclick="newFacture()">+ ${t('new_facture')}</button>
+        <div style="display:flex;gap:8px;align-items:center">
+          <div id="bulk-delete-bar" style="display:none">
+            <button class="btn btn-danger btn-sm" onclick="deleteBulkFacModal()">🗑 <span id="bulk-delete-count"></span></button>
+          </div>
+          <button class="btn btn-primary" onclick="newFacture()">+ ${t('new_facture')}</button>
+        </div>
       </div>
       <div style="overflow-x:auto">
         <table class="data">
-          <thead><tr><th>${t('facture_num')}</th><th>${t('client')}</th><th>${t('date')}</th><th>${t('total')}</th><th>${t('statut')}</th><th>${t('paiement_title')}</th><th>${t('actions')}</th></tr></thead>
+          <thead><tr>
+            <th><input type="checkbox" id="fac-check-all" onchange="toggleAllFacCheck(this)"></th>
+            <th>${t('facture_num')}</th><th>${t('client')}</th><th>${t('date')}</th><th>${t('total')}</th><th>${t('statut')}</th><th>${t('paiement_title')}</th><th>${t('actions')}</th>
+          </tr></thead>
           <tbody>${rows}</tbody>
         </table>
       </div>
     </div>`;
+}
+function toggleAllFacCheck(cb){
+  document.querySelectorAll('.fac-check').forEach(c=>c.checked=cb.checked);
+  updateBulkDeleteBar();
+}
+function updateBulkDeleteBar(){
+  const checked = document.querySelectorAll('.fac-check:checked');
+  const bar = document.getElementById('bulk-delete-bar');
+  if(!bar) return;
+  if(checked.length>0){
+    bar.style.display='block';
+    document.getElementById('bulk-delete-count').textContent = `${t('supprimer')} (${checked.length})`;
+  } else {
+    bar.style.display='none';
+  }
+}
+function deleteBulkFacModal(){
+  const ids = [...document.querySelectorAll('.fac-check:checked')].map(c=>parseInt(c.value));
+  if(!ids.length) return;
+  showModal(t('supprimer'), `<div class="alert alert-danger">⚠️ ${lang==='ar'?`سيتم حذف ${ids.length} فاتورة نهائياً، مع كل مدفوعاتها. لا يمكن التراجع.`:`${ids.length} facture(s) seront supprimées définitivement, avec tous leurs paiements associés. Action irréversible.`}</div>`,
+    `<button class="btn btn-danger" onclick="doDeleteBulkFac([${ids.join(',')}])">✓ ${t('confirmer')}</button>
+     <button class="btn btn-ghost" onclick="closeModalDirect()">${t('annuler')}</button>`);
+}
+async function doDeleteBulkFac(ids){
+  const res = await api('/factures/delete-bulk', {method:'POST', body: JSON.stringify({ids})});
+  closeModalDirect();
+  if(res.error){ toast(res.error, false); return; }
+  toast(t('save_ok'));
+  renderFactures();
 }
 
 async function newFacture(){
@@ -523,6 +561,7 @@ async function createFacture(){
 
 async function viewFacture(id){
   document.getElementById('content').innerHTML=`<div class="empty-state"><div class="empty-icon">⏳</div></div>`;
+  venteMainView = 'menu';
   const {facture,lignes,operations,lignes_libres,historique}=await api(`/factures/${id}`);
   const prods=await api('/produits');
   const ops=await api('/operations');
@@ -531,11 +570,8 @@ async function viewFacture(id){
   currentFactureCtx = { devise: facture.devise, taux: facture.taux_change || 1 };
 
   currentProdsList = prods;
-  const opsOpts=ops.map(o=>{
-    const prixConverti = dev==='USD' ? o.prix_unitaire : Math.round(o.prix_unitaire * currentFactureCtx.taux);
-    return `<option value="${o.id}" data-prix="${prixConverti}">${nomL(o)} — ${dev==='USD'?fmtUSD(prixConverti):fmt(prixConverti)} ${devLabel(dev)}</option>`;
-  }).join('');
-  const typesLLOpts=typesLL.map(tl=>{
+  currentOpsList = ops;
+  currentTypesLLOpts=typesLL.map(tl=>{
     const montantConverti = dev==='USD' ? tl.montant_par_defaut : Math.round(tl.montant_par_defaut * currentFactureCtx.taux);
     return `<option value="${tl.id}" data-signe="${tl.signe_par_defaut}" data-montant="${montantConverti}" data-nom-fr="${tl.nom_fr}" data-nom-ar="${tl.nom_ar}">${(tl.signe_par_defaut==='moins'?'➖ ':'➕ ')}${nomL(tl)}</option>`;
   }).join('');
@@ -567,47 +603,13 @@ async function viewFacture(id){
       <td>${canEdit?`<button class="btn btn-danger btn-sm" onclick="delLigneLibre(${id},${ll.id})">✕</button>`:''}</td>
     </tr>`).join('') : '';
 
-  const addForms = canEdit ? `
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:20px">
-      <div class="table-card" style="padding:16px">
-        <h4 style="margin-bottom:10px;font-size:.9rem;color:var(--sea)">+ ${t('ajouter_ligne')}</h4>
-        <p style="color:var(--muted);font-size:.82rem;margin-bottom:12px">${t('choisir_produit_aide')}</p>
-        <button class="btn btn-primary" style="width:100%;padding:14px" onclick="openProduitPickerModal(${id})">🔩 ${t('choisir_produit')}</button>
-      </div>
-      <div class="table-card" style="padding:16px">
-        <h4 style="margin-bottom:10px;font-size:.9rem;color:var(--gold)">+ ${t('ajouter_operation')}</h4>
-        <div class="form-group"><label>${t('nav_operations')}</label><select class="form-control" id="ap-op" onchange="updateAopPreview()">${opsOpts}</select></div>
-        <div class="form-group"><label>${t('quantite')}</label><input type="number" class="form-control" id="ap-qte" value="1" min="1" oninput="updateAopPreview()"></div>
-        <div id="ap-op-preview" class="num" style="font-size:.82rem;color:var(--muted);margin:-6px 0 12px;text-align:${lang==='ar'?'left':'right'}"></div>
-        <button class="btn btn-gold" style="width:100%" onclick="addOp(${id})">+ ${t('ajouter_operation')}</button>
-      </div>
-    </div>
-    <div class="table-card" style="padding:16px;margin-top:16px">
-      <h4 style="margin-bottom:10px;font-size:.9rem;color:var(--muted)">± ${t('ligne_libre')}</h4>
-      <div class="form-group"><label>${t('type_ligne')}</label>
-        <select class="form-control" id="ll-type" onchange="updateLigneLibreForm()">
-          ${typesLLOpts}
-          <option value="autre">✏️ ${t('autre_texte_libre')}</option>
-        </select>
-      </div>
-      <div id="ll-desc-wrap" style="display:none" class="form-group">
-        <label>${t('description')}</label>
-        <input type="text" class="form-control" id="ll-desc" placeholder="${t('ligne_libre_placeholder')}">
-      </div>
-      <div style="display:grid;grid-template-columns:1fr auto;gap:10px;align-items:end">
-        <div class="form-group" style="margin-bottom:0"><label>${t('montant')} (${t('USD')})</label><input type="number" class="form-control" id="ll-montant" placeholder="±0" step="0.5"></div>
-        <button class="btn btn-ghost" onclick="addLigneLibre(${id})">+ ${t('ajouter')}</button>
-      </div>
-      <p style="font-size:.75rem;color:var(--muted);margin-top:8px">${t('ligne_libre_aide')}</p>
-    </div>`:'';
-
   const actionsHTML = `
     <div style="margin-top:16px;display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
       ${facture.statut==='brouillon' ? `<button class="btn btn-primary" style="padding:10px 24px" onclick="validerFac(${id})">✓ ${t('valider')}</button>` : ''}
       ${facture.statut==='brouillon' && facture.montant_du_usd>0.005 ? `<button class="btn btn-gold" style="padding:10px 24px" onclick="validerEtPayerFac(${id},${facture.montant_du_usd})">💰 ${t('valider_et_payer')}</button>` : ''}
       ${facture.statut!=='annulee' ? `<button class="btn btn-danger" onclick="annulerFacModal(${id})">✕ ${t('annuler_facture')}</button>` : ''}
       ${facture.statut==='annulee' ? `<button class="btn btn-gold" onclick="reactiverFac(${id})">↺ ${t('reactiver')}</button>` : ''}
-      ${facture.statut==='brouillon' ? `<button class="btn btn-ghost" onclick="deleteFacModal(${id})">🗑 ${t('supprimer')}</button>` : ''}
+      <button class="btn btn-ghost" onclick="deleteFacModal(${id})">🗑 ${t('supprimer')}</button>
       <button class="btn btn-ghost" onclick="editFacDateModal(${id},'${facture.date_facture}')">📅 ${t('modifier_date')}</button>
     </div>`;
 
@@ -637,52 +639,61 @@ async function viewFacture(id){
     <div style="margin-bottom:16px">
       <button class="btn btn-ghost btn-sm" onclick="renderFactures()">← ${t('nav_factures')}</button>
     </div>
-    <div class="table-card" style="padding:24px">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:10px">
-        <div>
-          <h2 style="font-size:1.25rem;font-weight:900">${facture.numero}</h2>
-          <p style="color:var(--muted);font-size:.85rem;margin-top:4px" class="num">${facture.date_facture}${facture.heure_vente?' · '+facture.heure_vente:''} · ${facture.client_nom||'—'}</p>
-        </div>
-        <div style="display:flex;gap:8px;align-items:center">
-          <span class="badge dev-${facture.devise}">${facture.devise}</span>
-          <span class="badge ${facture.statut}">${t(facture.statut)}</span>
-          <a class="btn btn-primary btn-sm" href="/api/factures/${id}/pdf" target="_blank">📥 PDF</a>
-        </div>
+    <div class="vente-layout">
+      <div class="vente-main">
+        ${canEdit ? `<div class="table-card" style="padding:20px"><div id="vente-picker-zone"></div></div>` : `
+          <div class="table-card" style="padding:30px;text-align:center;color:var(--muted)">
+            <div style="font-size:2rem;margin-bottom:10px">🔒</div>
+            <p>${lang==='ar'?'الفاتورة ملغاة - للقراءة فقط':'Facture annulée - lecture seule'}</p>
+          </div>`}
       </div>
-      ${facture.devise==='USD'?`<div class="alert alert-success" style="margin-bottom:16px">${t('taux_today')}: <strong>${fmt(facture.taux_change)} ${t('LS')}</strong></div>`:''}
-      <h4 style="margin-bottom:8px;color:var(--muted);font-size:.85rem">📦 ${t('nav_produits')}</h4>
-      <div style="overflow-x:auto"><table class="data">
-        <thead><tr><th>${lang==='ar'?'المنتج':'Produit'}</th><th>${t('poids_kg')}</th><th>${t('prix_kg')}</th><th>${t('total')}</th><th></th></tr></thead>
-        <tbody>${lignesHTML}</tbody>
-      </table></div>
-      <h4 style="margin:16px 0 8px;color:var(--muted);font-size:.85rem">⚙️ ${t('nav_operations')}</h4>
-      <div style="overflow-x:auto"><table class="data">
-        <thead><tr><th>${lang==='ar'?'العملية':'Opération'}</th><th>${t('quantite')}</th><th>${t('prix_unitaire')}</th><th>${t('total')}</th><th></th></tr></thead>
-        <tbody>${opsHTML}</tbody>
-      </table></div>
-      ${llHTML ? `
-      <h4 style="margin:16px 0 8px;color:var(--muted);font-size:.85rem">± ${t('ligne_libre')}</h4>
-      <div style="overflow-x:auto"><table class="data">
-        <thead><tr><th>${t('description')}</th><th>${t('montant')}</th><th></th></tr></thead>
-        <tbody>${llHTML}</tbody>
-      </table></div>` : ''}
-      <div class="facture-totals">
-        <div class="total-row"><span>${t('sous_total_fer')}</span><span>${fmtMoney(facture.sous_total_fer,dev)}</span></div>
-        <div class="total-row"><span>${t('sous_total_ops')}</span><span>${fmtMoney(facture.sous_total_operations,dev)}</span></div>
-        ${facture.sous_total_lignes_libres?`<div class="total-row"><span>${t('ligne_libre')}</span><span>${facture.sous_total_lignes_libres>=0?'+':''}${fmtMoney(Math.abs(facture.sous_total_lignes_libres),dev)}</span></div>`:''}
-        <div class="total-row grand" style="flex-direction:column;align-items:flex-end;gap:2px">
-          <span style="align-self:flex-start">${t('total_facture')}</span>
-          <div style="text-align:${lang==='ar'?'left':'right'}">${fmtMoneyDual(facture.montant_du_usd, facture.taux_change, {size:'1.3rem'})}</div>
+      <div class="vente-side">
+        <div class="table-card" style="padding:20px">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:8px">
+            <div>
+              <h2 style="font-size:1.15rem;font-weight:900">${facture.numero}</h2>
+              <p style="color:var(--muted);font-size:.82rem;margin-top:3px" class="num">${facture.date_facture}${facture.heure_vente?' · '+facture.heure_vente:''}</p>
+              <p style="color:var(--muted);font-size:.85rem;margin-top:2px">👤 ${facture.client_nom||'—'}</p>
+            </div>
+            <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+              <span class="badge dev-${facture.devise}">${facture.devise}</span>
+              <span class="badge ${facture.statut}">${t(facture.statut)}</span>
+            </div>
+          </div>
+          <a class="btn btn-primary btn-sm" style="width:100%;justify-content:center;margin-bottom:12px" href="/api/factures/${id}/pdf" target="_blank">📥 PDF</a>
+          ${facture.devise==='USD'?`<div class="alert alert-success" style="margin-bottom:12px;font-size:.82rem">${t('taux_today')}: <strong class="num">${fmt(facture.taux_change)} ${t('LS')}</strong></div>`:''}
+
+          <div class="panier-header" style="background:var(--sea);color:white;padding:10px 14px;border-radius:8px 8px 0 0;font-size:.85rem;font-weight:700">🛒 ${t('nav_produits')} / ${t('nav_operations')}</div>
+          <div style="border:1px solid var(--border);border-top:none;border-radius:0 0 8px 8px;margin-bottom:14px;overflow:hidden">
+            <div style="overflow-x:auto"><table class="data" style="font-size:.82rem">
+              <tbody>${lignesHTML}</tbody>
+            </table></div>
+            <div style="overflow-x:auto"><table class="data" style="font-size:.82rem">
+              <tbody>${opsHTML}</tbody>
+            </table></div>
+            ${llHTML ? `<div style="overflow-x:auto"><table class="data" style="font-size:.82rem"><tbody>${llHTML}</tbody></table></div>` : ''}
+          </div>
+
+          <div class="facture-totals">
+            <div class="total-row"><span>${t('sous_total_fer')}</span><span class="num">${fmtMoney(facture.sous_total_fer,dev)}</span></div>
+            <div class="total-row"><span>${t('sous_total_ops')}</span><span class="num">${fmtMoney(facture.sous_total_operations,dev)}</span></div>
+            ${facture.sous_total_lignes_libres?`<div class="total-row"><span>${t('ligne_libre')}</span><span class="num">${facture.sous_total_lignes_libres>=0?'+':''}${fmtMoney(Math.abs(facture.sous_total_lignes_libres),dev)}</span></div>`:''}
+            <div class="total-row grand" style="flex-direction:column;align-items:flex-end;gap:2px">
+              <span style="align-self:flex-start">${t('total_facture')}</span>
+              <div style="text-align:${lang==='ar'?'left':'right'}">${fmtMoneyDual(facture.montant_du_usd, facture.taux_change, {size:'1.2rem'})}</div>
+            </div>
+          </div>
+
+          ${actionsHTML}
         </div>
+
+        ${paiementHTML}
       </div>
-      ${addForms}
-      ${actionsHTML}
     </div>
-    ${paiementHTML}
     ${histHTML}`;
 
+  if(canEdit) renderVentePicker(id);
   renderPaiementBlock('vente', id, canEdit);
-  if(canEdit){ updateAopPreview(); }
 }
 
 async function renderPaiementBlock(ptype, facId, canEdit){
@@ -748,16 +759,25 @@ async function delPaiement(ptype, facId, paiementId){
   renderPaiementBlock(ptype, facId, true);
 }
 
-/** Picker en tuiles pour choisir un produit (categorie -> modele -> poids),
- * dans le meme esprit visuel que Fer Magasin. Reutilise ap-prod/ap-poids/
- * updateApPreview/addLigne tels quels via un select cache a une seule
- * option, pour ne rien casser du flux d'ajout deja teste. */
-async function openProduitPickerModal(facId){
-  modalCatSelectionnee = null;
-  await loadCategories();
-  renderProduitPickerModal(facId);
-}
-function renderProduitPickerModal(facId){
+/** Picker en ligne (colonne de gauche de la vente) : categories de produits +
+ * operations + main-d'oeuvre/remise, toutes en tuiles au meme "menu" - exactement
+ * le meme principe que Fer Magasin, transpose dans la fiche facture de Manager. */
+let venteMainView = 'menu';
+let currentOpsList = [];
+
+function renderVentePicker(facId){
+  const zone = document.getElementById('vente-picker-zone');
+  if(!zone) return;
+
+  if(venteMainView === 'operations'){
+    renderVenteOperationTiles(facId);
+    return;
+  }
+  if(venteMainView !== 'menu' && CATEGORIES[venteMainView]){
+    renderVenteProduitTiles(facId, venteMainView);
+    return;
+  }
+
   const prods = currentProdsList;
   const parCategorie = {};
   prods.forEach(p=>{
@@ -766,44 +786,119 @@ function renderProduitPickerModal(facId){
     parCategorie[cle].push(p);
   });
 
-  if(!modalCatSelectionnee){
-    const catsHTML = Object.keys(parCategorie).length ? Object.keys(parCategorie).map(cle=>`
-      <button class="tile-btn" onclick="selectProduitPickerCategorie(${facId},'${cle}')">
-        <span class="tile-icon">${catIcon(cle)}</span>
-        ${catLabel(cle)}
-        <span class="tile-sub">${parCategorie[cle].length} ${lang==='ar'?'صنف':(lang==='fr'?'modèles':'models')}</span>
-      </button>
-    `).join('') : `<p style="grid-column:1/-1;text-align:center;color:var(--muted);padding:20px">${t('aucune_donnee')}</p>`;
-    showModal(`🔩 ${t('choisir_produit')}`, `<div class="tiles-grid">${catsHTML}</div>`, '', true);
-    return;
-  }
+  const catsHTML = Object.keys(parCategorie).map(cle=>`
+    <button class="tile-btn" onclick="selectVenteCategorie(${facId},'${cle}')">
+      <span class="tile-icon">${catIcon(cle)}</span>
+      ${catLabel(cle)}
+      <span class="tile-sub">${parCategorie[cle].length} ${lang==='ar'?'صنف':(lang==='fr'?'modèles':'models')}</span>
+    </button>`).join('');
 
-  const produitsCat = parCategorie[modalCatSelectionnee] || [];
+  const opsTile = `
+    <button class="tile-btn" style="border-color:var(--gold)" onclick="selectVenteOperations(${facId})">
+      <span class="tile-icon">⚙️</span>
+      ${t('nav_operations')}
+      <span class="tile-sub">${currentOpsList.length}</span>
+    </button>`;
+
+  const llTile = `
+    <button class="tile-btn" style="border-color:var(--muted)" onclick="ligneLibreModal(${facId})">
+      <span class="tile-icon">🛠️</span>
+      ${t('ligne_libre')}
+    </button>`;
+
+  zone.innerHTML = `
+    <h4 style="margin-bottom:10px;color:var(--muted);font-size:.85rem">📦 ${t('choisir_produit')}</h4>
+    <div class="tiles-grid">${catsHTML}${opsTile}${llTile}</div>`;
+}
+function selectVenteCategorie(facId, cle){
+  venteMainView = cle;
+  renderVentePicker(facId);
+}
+function selectVenteOperations(facId){
+  venteMainView = 'operations';
+  renderVentePicker(facId);
+}
+function retourVenteMenu(facId){
+  venteMainView = 'menu';
+  renderVentePicker(facId);
+}
+function renderVenteProduitTiles(facId, cle){
+  const zone = document.getElementById('vente-picker-zone');
+  const prods = currentProdsList.filter(p=>((p.categorie && CATEGORIES[p.categorie])?p.categorie:'autre')===cle);
   const dev = currentFactureCtx.devise;
-  const prodsHTML = produitsCat.length ? produitsCat.map(p=>{
+  const prodsHTML = prods.length ? prods.map(p=>{
     const prixConverti = dev==='USD' ? Math.round(((p.prix_vente_kg||0) / currentFactureCtx.taux) * 10000) / 10000 : (p.prix_vente_kg||0);
     const prixLabel = dev==='USD' ? fmtUSD(prixConverti) : fmt(prixConverti);
     return `
     <button class="tile-btn" onclick="selectProduitPickerProduit(${facId},${p.id})">
       ${nomL(p)}
       <span class="tile-sub">${p.dimension||''}</span>
-      <span class="tile-prix">${prixLabel} ${devLabel(dev)}</span>
+      <span class="tile-prix num">${prixLabel} ${devLabel(dev)}</span>
     </button>`;
   }).join('') : `<p style="grid-column:1/-1;text-align:center;color:var(--muted);padding:20px">${t('aucune_donnee')}</p>`;
 
-  showModal(`${catIcon(modalCatSelectionnee)} ${catLabel(modalCatSelectionnee)}`, `
-    <button class="btn btn-ghost btn-sm" style="margin-bottom:12px" onclick="retourProduitPickerCategories(${facId})">${lang==='ar'?'→':'←'} ${t('retour_categories')}</button>
-    <div class="tiles-grid">${prodsHTML}</div>
-  `, '', true);
+  zone.innerHTML = `
+    <button class="btn btn-ghost btn-sm" style="margin-bottom:12px" onclick="retourVenteMenu(${facId})">${t('retour_categories')}</button>
+    <h4 style="margin-bottom:10px;color:var(--muted);font-size:.85rem">${catIcon(cle)} ${catLabel(cle)}</h4>
+    <div class="tiles-grid">${prodsHTML}</div>`;
 }
-function selectProduitPickerCategorie(facId, cle){
-  modalCatSelectionnee = cle;
-  renderProduitPickerModal(facId);
+function renderVenteOperationTiles(facId){
+  const zone = document.getElementById('vente-picker-zone');
+  const dev = currentFactureCtx.devise;
+  const opsHTML = currentOpsList.length ? currentOpsList.map(o=>{
+    const prixConverti = dev==='USD' ? o.prix_unitaire : Math.round(o.prix_unitaire * currentFactureCtx.taux);
+    const prixLabel = dev==='USD' ? fmtUSD(prixConverti) : fmt(prixConverti);
+    return `
+    <button class="tile-btn" onclick="selectVenteOperationTile(${facId},${o.id})">
+      ${nomL(o)}
+      <span class="tile-prix num">${prixLabel} ${devLabel(dev)}</span>
+    </button>`;
+  }).join('') : `<p style="grid-column:1/-1;text-align:center;color:var(--muted);padding:20px">${t('aucune_donnee')}</p>`;
+
+  zone.innerHTML = `
+    <button class="btn btn-ghost btn-sm" style="margin-bottom:12px" onclick="retourVenteMenu(${facId})">${t('retour_categories')}</button>
+    <h4 style="margin-bottom:10px;color:var(--muted);font-size:.85rem">⚙️ ${t('nav_operations')}</h4>
+    <div class="tiles-grid">${opsHTML}</div>`;
 }
-function retourProduitPickerCategories(facId){
-  modalCatSelectionnee = null;
-  renderProduitPickerModal(facId);
+function selectVenteOperationTile(facId, opId){
+  const o = currentOpsList.find(x=>x.id===opId);
+  if(!o) return;
+  const dev = currentFactureCtx.devise;
+  const prixConverti = dev==='USD' ? o.prix_unitaire : Math.round(o.prix_unitaire * currentFactureCtx.taux);
+  showModal(nomL(o), `
+    <input type="hidden" id="ap-op" value="${o.id}" data-prix="${prixConverti}">
+    <div class="form-group"><label>${t('quantite')}</label><input type="number" class="form-control" id="ap-qte" value="1" min="1" oninput="updateAopPreview()" style="font-size:1.2rem;text-align:center"></div>
+    <div id="ap-op-preview" class="num" style="font-size:.92rem;color:var(--muted);margin:-4px 0 4px;text-align:${lang==='ar'?'left':'right'}"></div>
+  `, `
+    <button class="btn btn-gold" onclick="addOp(${facId})">✓ ${t('ajouter')}</button>
+    <button class="btn btn-ghost" onclick="closeModalDirect()">${t('annuler')}</button>
+  `, true);
+  updateAopPreview();
+  setTimeout(()=>{ const inp=document.getElementById('ap-qte'); if(inp) inp.select(); }, 80);
 }
+let currentTypesLLOpts = '';
+function ligneLibreModal(facId){
+  showModal(t('ligne_libre'), `
+    <div class="form-group"><label>${t('type_ligne')}</label>
+      <select class="form-control" id="ll-type" onchange="updateLigneLibreForm()">
+        ${currentTypesLLOpts}
+        <option value="autre">✏️ ${t('autre_texte_libre')}</option>
+      </select>
+    </div>
+    <div id="ll-desc-wrap" style="display:none" class="form-group">
+      <label>${t('description')}</label>
+      <input type="text" class="form-control" id="ll-desc" placeholder="${t('ligne_libre_placeholder')}">
+    </div>
+    <div class="form-group"><label>${t('montant')} (${t('USD')})</label><input type="number" class="form-control" id="ll-montant" placeholder="±0" step="0.5"></div>
+    <p style="font-size:.75rem;color:var(--muted)">${t('ligne_libre_aide')}</p>
+  `, `
+    <button class="btn btn-ghost" onclick="addLigneLibre(${facId})">+ ${t('ajouter')}</button>
+    <button class="btn btn-ghost" onclick="closeModalDirect()">${t('annuler')}</button>
+  `, true);
+  updateLigneLibreForm();
+}
+
+
 function selectProduitPickerProduit(facId, prodId){
   const p = currentProdsList.find(x=>x.id===prodId);
   if(!p) return;
@@ -815,7 +910,6 @@ function selectProduitPickerProduit(facId, prodId){
   const poidsLabel = unite==='piece' ? t('quantite_piece') : t('poids_kg');
 
   showModal(`${nomL(p)}${p.dimension?' ('+p.dimension+')':''}`, `
-    <button class="btn btn-ghost btn-sm" style="margin-bottom:12px" onclick="renderProduitPickerModal(${facId})">${t('retour')}</button>
     <select id="ap-prod" style="display:none"><option value="${p.id}" data-unite="${unite}" data-prix="${prixConverti}" selected></option></select>
     <div class="form-group"><label id="ap-poids-label">${poidsLabel}</label><input type="number" class="form-control" id="ap-poids" value="${poidsDefaut}" step="${poidsStep}" min="0" oninput="updateApPreview()" style="font-size:1.2rem;text-align:center"></div>
     <div id="ap-preview" class="num" style="font-size:.92rem;color:var(--muted);margin:-4px 0 4px;text-align:${lang==='ar'?'left':'right'}"></div>
@@ -866,12 +960,11 @@ function updateApPreview(){
 
 /** Meme apercu en direct pour les operations : quantite x prix = sous-total */
 function updateAopPreview(){
-  const select = document.getElementById('ap-op');
+  const el = document.getElementById('ap-op');
   const qteInput = document.getElementById('ap-qte');
   const preview = document.getElementById('ap-op-preview');
-  if(!select || !qteInput || !preview) return;
-  const opt = select.options[select.selectedIndex];
-  const prix = opt ? parseFloat(opt.getAttribute('data-prix')) || 0 : 0;
+  if(!el || !qteInput || !preview) return;
+  const prix = parseFloat(el.getAttribute('data-prix')) || 0;
   const qte = parseFloat(qteInput.value) || 0;
   const dev = currentFactureCtx.devise;
   const sousTotal = qte * prix;
@@ -886,11 +979,16 @@ async function addLigne(facId){
   const res = await api(`/factures/${facId}/ligne`,{method:'POST',body:JSON.stringify({produit_id:document.getElementById('ap-prod').value,poids_kg:poids})});
   if(res.error){ toast(res.error, false); return; }
   closeModalDirect();
-  modalCatSelectionnee = null;
+  venteMainView = 'menu';
   toast(t('save_ok')); viewFacture(facId);
 }
 async function addOp(facId){
-  await api(`/factures/${facId}/operation`,{method:'POST',body:JSON.stringify({operation_id:document.getElementById('ap-op').value,quantite:document.getElementById('ap-qte').value})});
+  const qte = document.getElementById('ap-qte').value;
+  if(!qte || parseFloat(qte)<=0){ toast(t('champs_requis'), false); return; }
+  const res = await api(`/factures/${facId}/operation`,{method:'POST',body:JSON.stringify({operation_id:document.getElementById('ap-op').value,quantite:qte})});
+  if(res.error){ toast(res.error, false); return; }
+  closeModalDirect();
+  venteMainView = 'menu';
   toast(t('save_ok')); viewFacture(facId);
 }
 async function updateOpFacture(facId,opId,qte,prix){
@@ -928,7 +1026,10 @@ async function addLigneLibre(facId){
   }
 
   if(!description||!montant){toast(t('champs_requis'),false);return;}
-  await api(`/factures/${facId}/ligne-libre`,{method:'POST',body:JSON.stringify({description,montant})});
+  const res = await api(`/factures/${facId}/ligne-libre`,{method:'POST',body:JSON.stringify({description,montant})});
+  if(res.error){ toast(res.error, false); return; }
+  closeModalDirect();
+  venteMainView = 'menu';
   toast(t('save_ok')); viewFacture(facId);
 }
 async function delLigneLibre(facId,llId){await api(`/factures/${facId}/ligne-libre/${llId}`,{method:'DELETE'}); viewFacture(facId);}
@@ -1566,9 +1667,9 @@ async function renderTaux(){
     <div style="display:grid;grid-template-columns:1fr 2fr;gap:18px">
       <div>
         <div class="table-card" style="padding:20px;margin-bottom:14px">
-          <h3 style="margin-bottom:14px">${t('update_prix')}</h3>
+          <h3 style="margin-bottom:14px">${t('mettre_a_jour_taux')}</h3>
           <div class="form-group"><label>${t('taux_du_jour')}</label><input type="number" class="form-control" id="nt" value="${today.ls_par_usd}" step="10"></div>
-          <button class="btn btn-primary" style="width:100%;background:#2c6f8a" onclick="saveTaux()">✓ ${t('update_prix')}</button>
+          <button class="btn btn-primary" style="width:100%;background:#2c6f8a" onclick="saveTaux()">✓ ${t('mettre_a_jour_taux')}</button>
         </div>
         <div class="stat-card" style="border-color:#2c6f8a">
           <div class="lbl">${t('taux_today')}</div><div class="val num">${fmt(today.ls_par_usd)}</div>

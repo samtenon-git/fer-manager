@@ -9,6 +9,16 @@ def get_db():
     conn = sqlite3.connect(DB_PATH, timeout=15)
     conn.row_factory = sqlite3.Row
     conn.execute("PRAGMA foreign_keys = ON")
+    # Mode WAL : en mode par defaut (rollback journal), une lecture (GET) et
+    # une ecriture (POST) peuvent se bloquer mutuellement, provoquant "database
+    # is locked" meme sans plusieurs processus concurrents. Le mode WAL permet
+    # aux lectures et ecritures de coexister sans se gener - correctif cote
+    # SQLite lui-meme, independant de la cause exacte du conflit (plusieurs
+    # instances, antivirus qui scanne le fichier, etc.). Le reglage est ecrit
+    # dans le fichier lui-meme : inutile de le refaire a chaque connexion, mais
+    # sans cout notable si on le fait quand meme.
+    conn.execute("PRAGMA journal_mode=WAL")
+    conn.execute("PRAGMA busy_timeout=15000")
     # Suivi de la connexion pour garantir sa fermeture en fin de requete (voir
     # close_db plus bas). Sans ca, une route qui plante avant d'avoir appele
     # db.close() laisse la connexion ouverte, potentiellement avec une
