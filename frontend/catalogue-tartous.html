@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>قائمة المنتجات — كتالوج مخزن الحديد</title>
+<style>
+:root{
+  --sea:#c1522a; --sea-lt:#dd7548; --sea-dk:#241e1a;
+  --gold:#b8862f; --sand:#f2ede2; --white:#ffffff;
+  --ink:#201a17; --muted:#7d7166; --border:#e6ddd0;
+  --success:#2f8f5b; --steel:#2c6f8a;
+}
+*{box-sizing:border-box;}
+body{
+  font-family:'Segoe UI', Tahoma, Arial, sans-serif;
+  background:var(--sand); color:var(--ink); margin:0; padding:0;
+  direction:rtl;
+}
+header{
+  background:linear-gradient(180deg, var(--sea-dk) 0%, #171310 100%);
+  color:white; padding:22px 20px; text-align:center;
+  position:sticky; top:0; z-index:50; box-shadow:0 2px 14px rgba(0,0,0,.25);
+}
+header h1{margin:0 0 6px; font-size:1.3rem;}
+header p{margin:0; color:rgba(255,255,255,.75); font-size:.88rem;}
+#counter{
+  display:inline-block; margin-top:10px; background:var(--sea);
+  padding:6px 18px; border-radius:20px; font-weight:700; font-size:.95rem;
+}
+main{max-width:900px; margin:0 auto; padding:18px 16px 100px;}
+.section-title{
+  display:flex; align-items:center; gap:10px; margin:26px 0 12px;
+  font-size:1.05rem; font-weight:800; color:var(--sea-dk);
+  border-bottom:2px solid var(--sea); padding-bottom:8px;
+}
+.section-title .icon{font-size:1.4rem;}
+.section-sub{color:var(--muted); font-size:.82rem; margin:-6px 0 12px; font-weight:400;}
+.cat-card{
+  background:white; border-radius:12px; box-shadow:0 2px 10px rgba(0,0,0,.06);
+  padding:16px; margin-bottom:14px; border-inline-start:4px solid var(--sea);
+}
+.cat-card.op{border-inline-start-color:var(--gold);}
+.cat-card h3{margin:0 0 4px; font-size:1rem;}
+.cat-card .en{color:var(--muted); font-size:.78rem; font-weight:400;}
+.items{display:grid; gap:2px; margin-top:10px;}
+.item-row{
+  display:flex; align-items:flex-start; gap:10px; padding:9px 8px;
+  border-radius:8px; transition:background .15s; cursor:pointer;
+}
+.item-row:hover{background:#faf7f2;}
+.item-row input[type=checkbox]{
+  width:22px; height:22px; margin-top:2px; accent-color:var(--sea); cursor:pointer; flex-shrink:0;
+}
+.item-label{flex:1;}
+.item-label .ar{font-weight:600; font-size:.95rem;}
+.item-label .fr-en{color:var(--muted); font-size:.78rem; margin-top:1px;}
+.size-input{
+  display:none; margin-top:6px; width:100%; padding:7px 10px;
+  border:1.5px solid var(--border); border-radius:7px; font-size:.85rem;
+  font-family:inherit;
+}
+.item-row.checked .size-input{display:block;}
+.item-row.checked{background:#fdf1ea;}
+.custom-add{
+  display:flex; gap:8px; margin-top:12px; padding-top:12px; border-top:1px dashed var(--border);
+}
+.custom-add input{
+  flex:1; padding:8px 10px; border:1.5px solid var(--border); border-radius:7px; font-size:.85rem; font-family:inherit;
+}
+.custom-add button{
+  background:var(--steel); color:white; border:none; border-radius:7px; padding:8px 16px;
+  font-weight:700; cursor:pointer; font-size:.85rem; white-space:nowrap;
+}
+.custom-list{margin-top:8px;}
+.custom-item{
+  display:flex; justify-content:space-between; align-items:center;
+  background:#eef2f5; padding:7px 12px; border-radius:7px; margin-top:6px; font-size:.85rem;
+}
+.custom-item button{background:none; border:none; color:var(--sea); font-weight:900; cursor:pointer; font-size:1rem;}
+
+#bar{
+  position:fixed; bottom:0; left:0; right:0; background:white;
+  box-shadow:0 -4px 16px rgba(0,0,0,.12); padding:14px 16px;
+  display:flex; gap:10px; justify-content:center; flex-wrap:wrap; z-index:60;
+}
+#bar button{
+  border:none; border-radius:10px; padding:13px 22px; font-weight:800; font-size:.95rem;
+  cursor:pointer; display:flex; align-items:center; gap:8px;
+}
+#btn-download{background:white; color:var(--sea-dk); border:2px solid var(--sea-dk) !important;}
+#btn-import{background:var(--sea); color:white;}
+#btn-print{background:white; color:var(--sea-dk); border:2px solid var(--sea-dk) !important;}
+#toast{
+  position:fixed; bottom:90px; left:50%; transform:translateX(-50%);
+  background:var(--success); color:white; padding:12px 24px; border-radius:10px;
+  font-weight:700; display:none; z-index:70; box-shadow:0 6px 20px rgba(0,0,0,.2);
+}
+.note{
+  background:#eef2f5; border-inline-start:4px solid var(--steel); border-radius:8px;
+  padding:12px 16px; margin-bottom:20px; font-size:.85rem; color:#235870;
+}
+@media print{
+  header, #bar, .custom-add{display:none;}
+  .cat-card{break-inside:avoid; box-shadow:none; border:1px solid #ccc;}
+  body{background:white;}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>📋 قائمة المنتجات والعمليات — مخزن الحديد</h1>
+  <p>ضع علامة ✓ أمام كل ما هو متوفر لديك، ثم اضغط "تنزيل القائمة" في الأسفل وأرسلها.</p>
+  <div id="counter">تم اختيار 0 عنصر</div>
+</header>
+
+<main>
+  <div class="note">
+    💡 إذا كان هناك مقاس أو نوع غير موجود في القائمة، استخدم مربع "إضافة عنصر آخر" في نهاية كل قسم.
+  </div>
+  <div id="catalogue"></div>
+</main>
+
+<div id="bar">
+  <button id="btn-print" onclick="window.print()">🖨️ طباعة</button>
+  <button id="btn-download" onclick="telechargerJSON()">📥 تنزيل ملف</button>
+  <button id="btn-import" onclick="ouvrirModalImport()">✓ استيراد مباشر إلى Fer Manager</button>
+</div>
+<div id="toast">✓ تم تنزيل الملف</div>
+
+<div id="import-modal-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:100;align-items:center;justify-content:center;padding:16px" onclick="if(event.target===this)fermerModalImport()">
+  <div style="background:white;border-radius:14px;max-width:440px;width:100%;padding:24px;max-height:85vh;overflow-y:auto">
+    <h3 style="margin:0 0 14px">هل تريد إضافة أم استبدال؟</h3>
+    <p style="color:var(--muted);font-size:.85rem;margin-bottom:16px">Voulez-vous ajouter cette sélection au catalogue existant, ou remplacer tout le catalogue actuel ?</p>
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <button onclick="executerImportDirect('ajouter')" style="background:var(--sea);color:white;border:none;border-radius:10px;padding:14px;font-weight:800;cursor:pointer;font-size:.95rem">
+        ➕ إضافة إلى الموجود<br><span style="font-weight:400;font-size:.78rem;opacity:.85">Ajouter à l'existant</span>
+      </button>
+      <button onclick="executerImportDirect('remplacer')" style="background:var(--gold);color:white;border:none;border-radius:10px;padding:14px;font-weight:800;cursor:pointer;font-size:.95rem">
+        🔄 حذف الكل واستبدال<br><span style="font-weight:400;font-size:.78rem;opacity:.85">Tout effacer et remplacer</span>
+      </button>
+      <button onclick="fermerModalImport()" style="background:none;border:1px solid var(--border);border-radius:10px;padding:12px;cursor:pointer;color:var(--muted)">إلغاء / Annuler</button>
+    </div>
+    <div id="import-result" style="margin-top:14px"></div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════
+// Structure des donnees : categories de produits + operations.
+// 'libre: true' => un champ de saisie libre apparait quand coche
+// (utile quand les tailles/variantes sont trop nombreuses pour
+// etre toutes listees individuellement).
+// ═══════════════════════════════════════════════════════════
+const CATALOGUE_PRODUITS = [
+  { cle:'rond_beton', icon:'🔩', nom_ar:'حديد التسليح', nom_fr:'Rond à béton', nom_en:'Rebar',
+    items:[
+      {ar:'حديد ناعم (عام)', fr:'Rond lisse (généralité)', en:'Smooth rebar (general)'},
+      {ar:'حديد مضلع (عام)', fr:'Rond crénelé (généralité)', en:'Ribbed rebar (general)'},
+      {ar:'قطر 6 ملم', fr:'Ø6mm', en:'Ø6mm'},
+      {ar:'قطر 8 ملم', fr:'Ø8mm', en:'Ø8mm'},
+      {ar:'قطر 10 ملم', fr:'Ø10mm', en:'Ø10mm'},
+      {ar:'قطر 12 ملم', fr:'Ø12mm', en:'Ø12mm'},
+      {ar:'قطر 14 ملم', fr:'Ø14mm', en:'Ø14mm'},
+      {ar:'قطر 16 ملم', fr:'Ø16mm', en:'Ø16mm'},
+      {ar:'قطر 18 ملم', fr:'Ø18mm', en:'Ø18mm'},
+      {ar:'قطر 20 ملم', fr:'Ø20mm', en:'Ø20mm'},
+      {ar:'قطر 22 ملم', fr:'Ø22mm', en:'Ø22mm'},
+      {ar:'قطر 25 ملم', fr:'Ø25mm', en:'Ø25mm'},
+      {ar:'قطر 28 ملم', fr:'Ø28mm', en:'Ø28mm'},
+      {ar:'قطر 32 ملم', fr:'Ø32mm', en:'Ø32mm'},
+    ]},
+  { cle:'tube', icon:'▭', nom_ar:'الأنابيب', nom_fr:'Tube', nom_en:'Tubes',
+    items:[
+      {ar:'أنبوب مربع أسود', fr:'Tube carré noir', en:'Black square tube', libre:true},
+      {ar:'أنبوب مربع مجلفن', fr:'Tube carré galvanisé', en:'Galvanized square tube', libre:true},
+      {ar:'أنبوب مستطيل أسود', fr:'Tube rectangulaire noir', en:'Black rectangular tube', libre:true},
+      {ar:'أنبوب مستطيل مجلفن', fr:'Tube rectangulaire galvanisé', en:'Galvanized rectangular tube', libre:true},
+      {ar:'أنبوب دائري (مواسير)', fr:'Tube rond / tuyau', en:'Round tube / pipe', libre:true},
+      {ar:'مواسير مياه', fr:"Tuyaux d'eau", en:'Water pipes', libre:true},
+      {ar:'مواسير غاز', fr:'Tuyaux de gaz', en:'Gas pipes', libre:true},
+    ]},
+  { cle:'plat', icon:'▬', nom_ar:'الحديد المسطح', nom_fr:'Plat', nom_en:'Flat bar',
+    items:[
+      {ar:'حديد مسطح', fr:'Fer plat', en:'Flat bar', libre:true},
+      {ar:'حديد مسطح مجلفن', fr:'Plat galvanisé', en:'Galvanized flat bar', libre:true},
+      {ar:'شريط حديد (رول)', fr:'Bande / feuillard (rouleau)', en:'Steel strip (coil)', libre:true},
+    ]},
+  { cle:'corniere', icon:'📐', nom_ar:'الزوايا', nom_fr:'Cornière', nom_en:'Angles',
+    items:[
+      {ar:'زاوية متساوية الأضلاع', fr:'Cornière à ailes égales', en:'Equal angle', libre:true},
+      {ar:'زاوية غير متساوية الأضلاع', fr:'Cornière à ailes inégales', en:'Unequal angle', libre:true},
+      {ar:'زاوية مجلفنة', fr:'Cornière galvanisée', en:'Galvanized angle', libre:true},
+    ]},
+  { cle:'profile', icon:'⌶', nom_ar:'البروفيلات', nom_fr:'Profilé', nom_en:'Profiles/Beams',
+    items:[
+      {ar:'بروفيل IPE', fr:'Profilé IPE', en:'IPE beam', libre:true},
+      {ar:'بروفيل HEA', fr:'Profilé HEA', en:'HEA beam', libre:true},
+      {ar:'بروفيل HEB', fr:'Profilé HEB', en:'HEB beam', libre:true},
+      {ar:'بروفيل UPN (يو)', fr:'Profilé UPN (en U)', en:'UPN channel', libre:true},
+      {ar:'بروفيل C', fr:'Profilé en C', en:'C-channel', libre:true},
+      {ar:'بروفيل Z', fr:'Profilé en Z', en:'Z-profile', libre:true},
+      {ar:'حديد I (آي بيم)', fr:'Poutrelle en I', en:'I-beam', libre:true},
+    ]},
+  { cle:'treillis', icon:'▦', nom_ar:'الشبك', nom_fr:'Treillis', nom_en:'Mesh',
+    items:[
+      {ar:'شبك ملحوم', fr:'Treillis soudé', en:'Welded wire mesh', libre:true},
+      {ar:'شبك مجلفن', fr:'Treillis galvanisé', en:'Galvanized mesh', libre:true},
+      {ar:'شبك تسليح (طرابيش)', fr:'Panneaux de treillis pour dalles', en:'Reinforcement mesh panels', libre:true},
+    ]},
+  { cle:'sheet', icon:'🧱', nom_ar:'الصاج', nom_fr:'Tôles', nom_en:'Sheet metal',
+    items:[
+      {ar:'صاج أسود', fr:'Tôle noire', en:'Black sheet', libre:true},
+      {ar:'صاج مجلفن', fr:'Tôle galvanisée', en:'Galvanized sheet', libre:true},
+      {ar:'صاج مضلع (ترابايز)', fr:'Tôle ondulée / bac acier', en:'Corrugated sheet', libre:true},
+      {ar:'صاج ستانلس', fr:'Tôle inox', en:'Stainless steel sheet', libre:true},
+      {ar:'صاج ملون / مبطن', fr:'Tôle laquée / prépeinte', en:'Color-coated sheet', libre:true},
+    ]},
+  { cle:'wire', icon:'🔗', nom_ar:'الأسلاك والشباك', nom_fr:'Fils & grillages', nom_en:'Wires & fencing',
+    items:[
+      {ar:'سلك رابط', fr:'Fil de ligature', en:'Binding wire'},
+      {ar:'سلك شائك', fr:'Fil barbelé', en:'Barbed wire'},
+      {ar:'سلك مجلفن', fr:'Fil galvanisé', en:'Galvanized wire', libre:true},
+      {ar:'شبك سياج (فراش)', fr:'Grillage / clôture', en:'Fencing mesh', libre:true},
+      {ar:'شبك مخرم', fr:'Tôle perforée', en:'Perforated sheet', libre:true},
+    ]},
+  { cle:'fixation', icon:'🔧', nom_ar:'مواد التثبيت', nom_fr:'Fixations', nom_en:'Fasteners',
+    items:[
+      {ar:'مسامير', fr:'Clous', en:'Nails', libre:true},
+      {ar:'براغي', fr:'Vis', en:'Screws', libre:true},
+      {ar:'صواميل', fr:'Écrous', en:'Nuts', libre:true},
+      {ar:'جلبات (رشقات)', fr:'Chevilles', en:'Anchors/dowels', libre:true},
+      {ar:'أقواس / زوايا تثبيت', fr:'Équerres de fixation', en:'Fixing brackets'},
+    ]},
+  { cle:'autre', icon:'📦', nom_ar:'أخرى', nom_fr:'Autres', nom_en:'Others',
+    items:[
+      {ar:'درابزين', fr:'Garde-corps / rambarde', en:'Handrail', libre:true},
+      {ar:'أعمدة معدنية', fr:'Poteaux métalliques', en:'Metal posts', libre:true},
+      {ar:'سكة (قضبان توجيه)', fr:'Rails de guidage', en:'Guide rails'},
+      {ar:'بلوك إسمنتي', fr:'Bloc de béton', en:'Concrete block', libre:true},
+    ]},
+];
+
+const OPERATIONS = [
+  { cle:'decoupe', nom_ar:'القص والتشكيل', nom_fr:'Découpe & mise en forme', nom_en:'Cutting & shaping',
+    items:[
+      {ar:'قص (بالقاطعة)', fr:'Coupe (disque/scie)', en:'Cutting'},
+      {ar:'ثني حديد التسليح', fr:'Cintrage du rond à béton', en:'Rebar bending'},
+      {ar:'ثني الصاج', fr:'Pliage de tôle', en:'Sheet bending'},
+      {ar:'لف (حلقات، أطواق)', fr:'Roulage (anneaux, cercles)', en:'Rolling (rings/hoops)'},
+      {ar:'تجليخ / تنعيم الحواف', fr:'Meulage / ébavurage', en:'Grinding / deburring'},
+      {ar:'تخريم (فتحات)', fr:'Découpe de trous / grugeage', en:'Notching / hole cutting'},
+    ]},
+  { cle:'soudure', nom_ar:'اللحام والتجميع', nom_fr:'Soudure & assemblage', nom_en:'Welding & assembly',
+    items:[
+      {ar:'لحام (باللكل سم أو بالنقطة)', fr:'Soudure (au cm / au point)', en:'Welding (per cm/spot)'},
+      {ar:'لحام شبك التسليح', fr:"Soudure de treillis d'armature", en:'Rebar mesh welding'},
+      {ar:'تجميع درابزين / بوابات', fr:'Assemblage garde-corps / portails', en:'Handrail / gate assembly'},
+      {ar:'تجميع هياكل معدنية', fr:'Assemblage de structures métalliques', en:'Metal frame assembly'},
+    ]},
+  { cle:'percage', nom_ar:'الثقب والتفريز', nom_fr:'Perçage & filetage', nom_en:'Drilling & threading',
+    items:[
+      {ar:'ثقب (تنقيب)', fr:'Perçage', en:'Drilling'},
+      {ar:'تسنين (فتيلة)', fr:'Filetage', en:'Threading'},
+      {ar:'تفريز', fr:'Fraisage', en:'Milling'},
+      {ar:'خراطة', fr:'Tournage', en:'Turning (lathe)'},
+    ]},
+  { cle:'finition', nom_ar:'التشطيب والحماية', nom_fr:'Finition & protection', nom_en:'Finishing & protection',
+    items:[
+      {ar:'جلفنة على البارد (دهان زنك)', fr:'Galvanisation à froid (zinc)', en:'Cold galvanizing (zinc paint)'},
+      {ar:'طلاء / دهان', fr:'Peinture / revêtement', en:'Painting / coating'},
+      {ar:'تنظيف من الصدأ (سفع رملي)', fr:'Sablage / décapage', en:'Sandblasting / rust removal'},
+      {ar:'تغليف / تعبئة للنقل', fr:'Emballage pour transport', en:'Packaging for transport'},
+    ]},
+  { cle:'services', nom_ar:'خدمات أخرى', nom_fr:'Autres services', nom_en:'Other services',
+    items:[
+      {ar:'توصيل', fr:'Livraison', en:'Delivery'},
+      {ar:'تحميل / تنزيل', fr:'Chargement / déchargement', en:'Loading / unloading'},
+      {ar:'تصنيع حسب الطلب (قياسات خاصة)', fr:'Fabrication sur mesure', en:'Custom fabrication'},
+      {ar:'استشارة فنية (كميات، مقاسات)', fr:'Conseil technique', en:'Technical advice'},
+    ]},
+];
+
+// ═══════════════════════════════════════════════════════════
+// Rendu
+// ═══════════════════════════════════════════════════════════
+const selections = {}; // cle -> Set d'indices coches
+const customItems = {}; // cle -> [{ar,fr,en}]
+const sizeValues = {}; // "cle-idx" -> texte saisi
+
+function itemKey(cle, idx){ return cle+'-'+idx; }
+
+function renderCategorie(cat, isOp){
+  const div = document.createElement('div');
+  div.className = 'cat-card' + (isOp ? ' op' : '');
+  const icon = cat.icon || '⚙️';
+  div.innerHTML = `
+    <h3>${icon} ${cat.nom_ar} <span class="en">— ${cat.nom_fr} / ${cat.nom_en}</span></h3>
+    <div class="items" id="items-${cat.cle}"></div>
+    <div class="custom-add">
+      <input type="text" id="custom-input-${cat.cle}" placeholder="إضافة عنصر آخر... / Ajouter un autre élément...">
+      <button onclick="addCustom('${cat.cle}')">+ إضافة</button>
+    </div>
+    <div class="custom-list" id="custom-list-${cat.cle}"></div>
+  `;
+  document.getElementById('catalogue').appendChild(div);
+
+  const itemsDiv = div.querySelector(`#items-${cat.cle}`);
+  cat.items.forEach((it, idx) => {
+    const row = document.createElement('label');
+    row.className = 'item-row';
+    row.innerHTML = `
+      <input type="checkbox" onchange="toggleItem('${cat.cle}', ${idx}, this)">
+      <div class="item-label">
+        <div class="ar">${it.ar}</div>
+        <div class="fr-en">${it.fr} — ${it.en}</div>
+        ${it.libre ? `<input type="text" class="size-input" placeholder="المقاسات المتوفرة... / tailles disponibles..." onclick="event.stopPropagation()" oninput="sizeValues['${itemKey(cat.cle, idx)}']=this.value">` : ''}
+      </div>
+    `;
+    itemsDiv.appendChild(row);
+  });
+}
+
+function toggleItem(cle, idx, checkbox){
+  if(!selections[cle]) selections[cle] = new Set();
+  if(checkbox.checked) selections[cle].add(idx);
+  else selections[cle].delete(idx);
+  checkbox.closest('.item-row').classList.toggle('checked', checkbox.checked);
+  updateCounter();
+}
+
+function addCustom(cle){
+  const input = document.getElementById(`custom-input-${cle}`);
+  const val = input.value.trim();
+  if(!val) return;
+  if(!customItems[cle]) customItems[cle] = [];
+  customItems[cle].push({ar: val, fr: val, en: val});
+  input.value = '';
+  renderCustomList(cle);
+  updateCounter();
+}
+function removeCustom(cle, idx){
+  customItems[cle].splice(idx, 1);
+  renderCustomList(cle);
+  updateCounter();
+}
+function renderCustomList(cle){
+  const list = document.getElementById(`custom-list-${cle}`);
+  list.innerHTML = (customItems[cle]||[]).map((c,i)=>`
+    <div class="custom-item"><span>${c.ar}</span><button onclick="removeCustom('${cle}',${i})">✕</button></div>
+  `).join('');
+}
+
+function updateCounter(){
+  let total = 0;
+  Object.values(selections).forEach(s => total += s.size);
+  Object.values(customItems).forEach(arr => total += arr.length);
+  document.getElementById('counter').textContent = `تم اختيار ${total} عنصر`;
+}
+
+// Rendu initial
+(function init(){
+  const titreP = document.createElement('div');
+  titreP.className = 'section-title';
+  titreP.innerHTML = `<span class="icon">📦</span> المنتجات — Produits`;
+  document.getElementById('catalogue').appendChild(titreP);
+  CATALOGUE_PRODUITS.forEach(cat => renderCategorie(cat, false));
+
+  const titreO = document.createElement('div');
+  titreO.className = 'section-title';
+  titreO.innerHTML = `<span class="icon">⚙️</span> العمليات — Opérations`;
+  document.getElementById('catalogue').appendChild(titreO);
+  OPERATIONS.forEach(cat => renderCategorie(cat, true));
+})();
+
+// ═══════════════════════════════════════════════════════════
+// Export JSON - compatible avec l'import "Catalogue Tartous"
+// de Fer Manager (Reglages > Importer une selection catalogue)
+// ═══════════════════════════════════════════════════════════
+function construirePayload(){
+  const produits = [];
+  CATALOGUE_PRODUITS.forEach(cat=>{
+    (selections[cat.cle]||new Set()).forEach(idx=>{
+      const it = cat.items[idx];
+      produits.push({
+        categorie_cle: cat.cle,
+        categorie_nom_fr: cat.nom_fr, categorie_nom_ar: cat.nom_ar, categorie_nom_en: cat.nom_en,
+        categorie_icon: cat.icon,
+        nom_ar: it.ar, nom_fr: it.fr, nom_en: it.en,
+        dimension: sizeValues[itemKey(cat.cle, idx)] || ''
+      });
+    });
+    (customItems[cat.cle]||[]).forEach(c=>{
+      produits.push({
+        categorie_cle: cat.cle,
+        categorie_nom_fr: cat.nom_fr, categorie_nom_ar: cat.nom_ar, categorie_nom_en: cat.nom_en,
+        categorie_icon: cat.icon,
+        nom_ar: c.ar, nom_fr: c.fr, nom_en: c.en, dimension: ''
+      });
+    });
+  });
+
+  const operations = [];
+  OPERATIONS.forEach(cat=>{
+    (selections[cat.cle]||new Set()).forEach(idx=>{
+      const it = cat.items[idx];
+      operations.push({nom_ar: it.ar, nom_fr: it.fr, nom_en: it.en, groupe: cat.nom_fr});
+    });
+    (customItems[cat.cle]||[]).forEach(c=>{
+      operations.push({nom_ar: c.ar, nom_fr: c.fr, nom_en: c.en, groupe: cat.nom_fr});
+    });
+  });
+
+  return {
+    type: 'catalogue_tartous_selection',
+    date_export: new Date().toISOString(),
+    produits, operations
+  };
+}
+
+function telechargerJSON(){
+  const payload = construirePayload();
+  const blob = new Blob([JSON.stringify(payload, null, 2)], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `catalogue-tartous-${new Date().toISOString().slice(0,10)}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+
+  const toast = document.getElementById('toast');
+  toast.style.display = 'block';
+  setTimeout(()=> toast.style.display='none', 2500);
+}
+
+// ═══════════════════════════════════════════════════════════
+// Import direct : cette page est servie PAR Fer Manager lui-meme
+// (voir Reglages > Catalogue depuis Tartous), donc un simple fetch relatif
+// suffit - pas besoin de telecharger/envoyer un fichier separement.
+// ═══════════════════════════════════════════════════════════
+function ouvrirModalImport(){
+  let total = 0;
+  Object.values(selections).forEach(s => total += s.size);
+  Object.values(customItems).forEach(arr => total += arr.length);
+  if(total === 0){
+    alert('لم تقم باختيار أي عنصر بعد. / Vous n\'avez encore rien coché.');
+    return;
+  }
+  document.getElementById('import-result').innerHTML = '';
+  document.getElementById('import-modal-overlay').style.display = 'flex';
+}
+function fermerModalImport(){
+  document.getElementById('import-modal-overlay').style.display = 'none';
+}
+async function executerImportDirect(mode){
+  const resultDiv = document.getElementById('import-result');
+  resultDiv.innerHTML = `<p style="text-align:center;color:var(--muted)">... جارٍ الاستيراد</p>`;
+  const payload = construirePayload();
+  payload.mode = mode;
+
+  try{
+    const res = await fetch('/api/catalogue-tartous/import', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(payload)
+    });
+    const data = await res.json();
+    if(!res.ok || data.error){
+      resultDiv.innerHTML = `<div style="background:#fbeaea;color:#a33;padding:12px;border-radius:8px;font-size:.85rem">⚠️ ${data.error || 'حدث خطأ / Une erreur est survenue'}</div>`;
+      return;
+    }
+    resultDiv.innerHTML = `
+      <div style="background:#e3f5eb;color:#1c6b45;padding:14px;border-radius:8px;font-size:.85rem;line-height:1.7">
+        ✓ ${data.nb_categories_creees} فئة جديدة / catégorie(s)<br>
+        ✓ ${data.nb_produits_crees} منتج جديد / produit(s)<br>
+        ✓ ${data.nb_operations_creees} عملية جديدة / opération(s)<br>
+        <strong>${'تم الاستيراد بنجاح! / Import réussi !'}</strong>
+      </div>`;
+  } catch(e){
+    resultDiv.innerHTML = `<div style="background:#fbeaea;color:#a33;padding:12px;border-radius:8px;font-size:.85rem">
+      ⚠️ ${'تعذّر الوصول إلى Fer Manager. تأكد من فتح هذه الصفحة من نفس الجهاز أو الشبكة. / Impossible de joindre Fer Manager. Assurez-vous d\'ouvrir cette page depuis le même appareil ou réseau.'}
+    </div>`;
+  }
+}
+</script>
+</body>
+</html>

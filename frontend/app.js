@@ -59,7 +59,7 @@ const TR = {
     afficher_devise_secondaire:"Afficher l'autre devise en équivalent", oui:"Oui", non:"Non",
     zone_danger:"Zone de danger", effacer_donnees:"Effacer toutes les données",
     effacer_donnees_desc:"Supprime définitivement toutes les factures, clients, produits et données. Action irréversible.",
-    taper_effacer:"Tapez EFFACER pour confirmer", importer_demo:"Importer une démo",
+    taper_effacer:"Tapez EFFACER pour confirmer", importer_demo:"Importer une démo", catalogue_tartous_titre:"Catalogue depuis Tartous", catalogue_tartous_desc:"Ouvrez la page à cocher directement (si Tartous a accès à Fer Manager), ou importez le fichier envoyé manuellement.", ct_ouvrir_page:"Ouvrir la page à cocher", ct_ouvrir_page_aide:"À ouvrir depuis Tartous (même appareil ou même réseau que Fer Manager) — l'import se fait directement, sans fichier à envoyer.", ct_ou_fichier:"Ou bien, si le fichier a été envoyé séparément (WhatsApp, email) :", catalogue_tartous_mode:"Que faire avec la sélection ?", ct_mode_ajouter:"Ajouter à la base existante", ct_mode_remplacer:"Effacer tout le catalogue actuel et le remplacer", ct_remplacer_avertissement:"Tous les produits et opérations actuels seront désactivés (pas supprimés définitivement — vos factures existantes restent intactes) et remplacés par la sélection.", ct_prix_a_definir:"Pensez à définir les prix de ces nouveaux produits/opérations avant de les vendre.", importer:"Importer",
     demo_standard:"Démo standard", demo_standard_desc:"30 ventes, 15 achats, activité normale",
     demo_volume:"Démo gros volume", demo_volume_desc:"90 ventes, 40 achats, commerce très actif",
     demo_credits:"Démo crédits", demo_credits_desc:"Beaucoup de paiements en attente/différés",
@@ -124,7 +124,7 @@ const TR = {
     afficher_devise_secondaire:"عرض العملة الأخرى كمعادل", oui:"نعم", non:"لا",
     zone_danger:"منطقة الخطر", effacer_donnees:"حذف جميع البيانات",
     effacer_donnees_desc:"يحذف نهائياً جميع الفواتير والعملاء والمنتجات والبيانات. إجراء لا رجعة فيه.",
-    taper_effacer:"اكتب EFFACER للتأكيد", importer_demo:"استيراد بيانات تجريبية",
+    taper_effacer:"اكتب EFFACER للتأكيد", importer_demo:"استيراد بيانات تجريبية", catalogue_tartous_titre:"كتالوج من طرطوس", catalogue_tartous_desc:"افتح صفحة الاختيار مباشرة (إذا كان لدى طرطوس وصول إلى Fer Manager)، أو استورد الملف المُرسل يدوياً.", ct_ouvrir_page:"فتح صفحة الاختيار", ct_ouvrir_page_aide:"يُفتح من طرطوس (نفس الجهاز أو نفس الشبكة) - يتم الاستيراد مباشرة دون إرسال ملف.", ct_ou_fichier:"أو إذا تم إرسال الملف بشكل منفصل (واتساب، إيميل):", catalogue_tartous_mode:"ماذا تفعل بالتحديد؟", ct_mode_ajouter:"إضافة إلى القاعدة الحالية", ct_mode_remplacer:"حذف الكتالوج الحالي بالكامل واستبداله", ct_remplacer_avertissement:"سيتم تعطيل جميع المنتجات والعمليات الحالية (وليس حذفها نهائياً - فواتيرك الحالية تبقى سليمة) واستبدالها بالتحديد الجديد.", ct_prix_a_definir:"لا تنس تحديد أسعار هذه المنتجات/العمليات الجديدة قبل بيعها.", importer:"استيراد",
     demo_standard:"عرض قياسي", demo_standard_desc:"30 عملية بيع، 15 شراء، نشاط عادي",
     demo_volume:"عرض حجم كبير", demo_volume_desc:"90 عملية بيع، 40 شراء، تجارة نشطة جداً",
     demo_credits:"عرض الديون", demo_credits_desc:"الكثير من المدفوعات المعلقة أو الآجلة",
@@ -189,7 +189,7 @@ const TR = {
     afficher_devise_secondaire:"Show the other currency as equivalent", oui:"Yes", non:"No",
     zone_danger:"Danger zone", effacer_donnees:"Erase all data",
     effacer_donnees_desc:"Permanently deletes all invoices, clients, products and data. Irreversible action.",
-    taper_effacer:"Type EFFACER to confirm", importer_demo:"Import a demo",
+    taper_effacer:"Type EFFACER to confirm", importer_demo:"Import a demo", catalogue_tartous_titre:"Catalogue from Tartous", catalogue_tartous_desc:"Open the checklist page directly (if Tartous has access to Fer Manager), or import the file sent manually.", ct_ouvrir_page:"Open the checklist page", ct_ouvrir_page_aide:"To be opened from Tartous (same device or network as Fer Manager) — the import happens directly, no file to send.", ct_ou_fichier:"Or, if the file was sent separately (WhatsApp, email):", catalogue_tartous_mode:"What to do with the selection?", ct_mode_ajouter:"Add to existing catalogue", ct_mode_remplacer:"Erase the whole current catalogue and replace it", ct_remplacer_avertissement:"All current products and operations will be deactivated (not permanently deleted — your existing invoices stay intact) and replaced by the selection.", ct_prix_a_definir:"Remember to set prices for these new products/operations before selling them.", importer:"Import",
     demo_standard:"Standard demo", demo_standard_desc:"30 sales, 15 purchases, normal activity",
     demo_volume:"High volume demo", demo_volume_desc:"90 sales, 40 purchases, very active business",
     demo_credits:"Credits demo", demo_credits_desc:"Lots of pending/deferred payments",
@@ -1853,6 +1853,31 @@ async function renderSettings(){
     </div>
 
     <div class="table-card" style="padding:24px;max-width:560px;margin-top:18px">
+      <h3 style="margin-bottom:16px">🇸🇾 ${t('catalogue_tartous_titre')}</h3>
+      <p style="color:var(--muted);font-size:.88rem;margin-bottom:14px">${t('catalogue_tartous_desc')}</p>
+
+      <a class="btn btn-gold" style="width:100%;display:flex;justify-content:center;margin-bottom:10px" href="/catalogue-tartous.html" target="_blank">🔗 ${t('ct_ouvrir_page')}</a>
+      <p style="color:var(--muted);font-size:.78rem;margin-bottom:18px">${t('ct_ouvrir_page_aide')}</p>
+
+      <div style="border-top:1px dashed var(--border);padding-top:16px">
+        <p style="color:var(--muted);font-size:.8rem;margin-bottom:10px">${t('ct_ou_fichier')}</p>
+        <input type="file" id="ct-file" accept=".json" class="form-control" style="margin-bottom:12px" onchange="previewCatalogueTartous()">
+        <div id="ct-preview" style="margin-bottom:12px"></div>
+        <div id="ct-mode-choice" style="display:none">
+          <div class="form-group">
+            <label>${t('catalogue_tartous_mode')}</label>
+            <select class="form-control" id="ct-mode">
+              <option value="ajouter">${t('ct_mode_ajouter')}</option>
+              <option value="remplacer">${t('ct_mode_remplacer')}</option>
+            </select>
+          </div>
+          <button class="btn btn-gold" style="width:100%" onclick="confirmImportCatalogueTartous()">📥 ${t('importer')}</button>
+        </div>
+        <div id="ct-result" style="margin-top:14px"></div>
+      </div>
+    </div>
+
+    <div class="table-card" style="padding:24px;max-width:560px;margin-top:18px">
       <h3 style="margin-bottom:16px">🎭 ${t('importer_demo')}</h3>
       <div class="alert alert-warn" style="margin-bottom:16px">${t('effacer_donnees_desc')}</div>
 
@@ -1936,6 +1961,76 @@ async function doImportBackup(){
   const j=await r.json();
   if(j.ok){toast(t('save_ok')); setTimeout(()=>location.reload(),1000);}
   else toast('Erreur',false);
+}
+
+let _catalogueTartousData = null;
+
+/** Apercu du fichier choisi (genere par catalogue-a-cocher.html) avant
+ * import : combien de produits/categories/operations, avant de decider
+ * ajouter ou remplacer. */
+async function previewCatalogueTartous(){
+  const f = document.getElementById('ct-file').files[0];
+  const previewDiv = document.getElementById('ct-preview');
+  const modeChoice = document.getElementById('ct-mode-choice');
+  document.getElementById('ct-result').innerHTML = '';
+  _catalogueTartousData = null;
+  modeChoice.style.display = 'none';
+  if(!f){ previewDiv.innerHTML = ''; return; }
+
+  const text = await f.text();
+  let data;
+  try{ data = JSON.parse(text); } catch(e){
+    previewDiv.innerHTML = `<div class="alert alert-danger">${lang==='ar'?'ملف غير صالح':'Fichier invalide'}</div>`;
+    return;
+  }
+  if(data.type !== 'catalogue_tartous_selection'){
+    previewDiv.innerHTML = `<div class="alert alert-danger">${lang==='ar'?'هذا الملف ليس من أداة اختيار الكتالوج':"Ce fichier ne vient pas de l'outil de sélection catalogue"}</div>`;
+    return;
+  }
+  _catalogueTartousData = data;
+  const produits = data.produits || [];
+  const operations = data.operations || [];
+  const categories = [...new Set(produits.map(p=>p.categorie_nom_fr))];
+
+  previewDiv.innerHTML = `
+    <div class="table-card">
+      <div class="table-header"><h3>${lang==='ar'?`معاينة: ${produits.length} منتج، ${operations.length} عملية`:`Aperçu : ${produits.length} produit(s), ${operations.length} opération(s)`}</h3></div>
+      <div style="max-height:220px;overflow-y:auto">
+        ${produits.map(p=>`<div class="prix-row"><span>${p.categorie_icon||'📦'} ${lang==='ar'?p.nom_ar:p.nom_fr}${p.dimension?' — '+p.dimension:''}</span></div>`).join('')}
+        ${operations.map(o=>`<div class="prix-row"><span>⚙️ ${lang==='ar'?o.nom_ar:o.nom_fr}</span></div>`).join('')}
+      </div>
+    </div>`;
+  document.getElementById('ct-mode-choice').style.display = 'block';
+}
+
+function confirmImportCatalogueTartous(){
+  const mode = document.getElementById('ct-mode').value;
+  if(mode === 'remplacer'){
+    showModal(t('catalogue_tartous_titre'), `
+      <div class="alert alert-warn">💾 ${t('proposer_sauvegarde')}</div>
+      <a class="btn btn-gold" style="width:100%;display:flex;justify-content:center;margin-bottom:16px" href="/api/backup/export" download>📥 ${t('backup_export')}</a>
+      <div class="alert alert-danger">⚠️ ${t('ct_remplacer_avertissement')}</div>`,
+      `<button class="btn btn-danger" onclick="doImportCatalogueTartous('remplacer')">✓ ${t('confirmer')}</button>
+       <button class="btn btn-ghost" onclick="closeModalDirect()">${t('annuler')}</button>`);
+  } else {
+    doImportCatalogueTartous('ajouter');
+  }
+}
+
+async function doImportCatalogueTartous(mode){
+  if(!_catalogueTartousData){ toast(t('champs_requis'), false); return; }
+  closeModalDirect();
+  const payload = {..._catalogueTartousData, mode};
+  const res = await api('/catalogue-tartous/import', {method:'POST', body: JSON.stringify(payload)});
+  if(res.error){ toast(res.error, false); return; }
+  document.getElementById('ct-result').innerHTML = `
+    <div class="alert alert-success">
+      ✓ ${res.nb_categories_creees} ${lang==='ar'?'فئة جديدة':'nouvelle(s) catégorie(s)'}<br>
+      ✓ ${res.nb_produits_crees} ${lang==='ar'?'منتج جديد':'nouveau(x) produit(s)'}<br>
+      ✓ ${res.nb_operations_creees} ${lang==='ar'?'عملية جديدة':'nouvelle(s) opération(s)'}<br>
+      <strong>${t('ct_prix_a_definir')}</strong>
+    </div>`;
+  toast(t('save_ok'));
 }
 
 function confirmResetComplet(){

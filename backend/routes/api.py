@@ -117,6 +117,107 @@ def get_produits():
     db.close()
     return jsonify([dict(r) for r in rows])
 
+@api.route('/catalogue-tartous/import', methods=['POST'])
+def import_catalogue_tartous():
+    """Importe la selection cochee depuis l'outil web catalogue-a-cocher.html
+    (envoyee par la famille a Tartous). mode='ajouter' insere en plus de
+    l'existant ; mode='remplacer' desactive d'abord tout le catalogue actuel
+    (suppression LOGIQUE, actif=0 - ne casse jamais l'historique des factures
+    deja existantes, meme principe que la suppression normale d'un produit)
+    puis insere uniquement la selection."""
+    data = request.json or {}
+    if data.get('type') != 'catalogue_tartous_selection':
+        return jsonify({'error': "Fichier invalide : ce n'est pas un export du catalogue Tartous."}), 400
+
+    mode = data.get('mode', 'ajouter')
+    if mode not in ('ajouter', 'remplacer'):
+        return jsonify({'error': "mode doit être 'ajouter' ou 'remplacer'"}), 400
+
+    produits = data.get('produits', [])
+    operations = data.get('operations', [])
+
+    db = get_db()
+
+    if mode == 'remplacer':
+        db.execute("UPDATE produits SET actif=0 WHERE actif=1")
+        db.execute("UPDATE operations SET actif=0 WHERE actif=1")
+
+    import re, unicodedata
+    def slugify(nom_fr, nom_ar):
+        base = nom_fr or nom_ar
+        slug = unicodedata.normalize('NFKD', base).encode('ascii', 'ignore').decode('ascii')
+        slug = re.sub(r'[^a-zA-Z0-9]+', '_', slug).strip('_').lower() or 'categorie'
+        return slug
+
+    categorie_cache = {}
+    nb_categories_creees = 0
+    nb_produits_crees = 0
+    nb_operations_creees = 0
+
+    for p in produits:
+        cle_export = p.get('categorie_cle', 'autre')
+        if cle_export not in categorie_cache:
+            existe = db.execute("SELECT cle FROM categories WHERE cle=?", (cle_export,)).fetchone()
+            if existe:
+                categorie_cache[cle_export] = existe['cle']
+            else:
+                existe_nom = db.execute(
+                    "SELECT cle FROM categories WHERE nom_fr=? OR nom_ar=?",
+                    (p.get('categorie_nom_fr', ''), p.get('categorie_nom_ar', ''))
+                ).fetchone()
+                if existe_nom:
+                    categorie_cache[cle_export] = existe_nom['cle']
+                else:
+                    nouvelle_cle = slugify(p.get('categorie_nom_fr', ''), p.get('categorie_nom_ar', ''))
+                    base_cle = nouvelle_cle
+                    n = 2
+                    while db.execute("SELECT 1 FROM categories WHERE cle=?", (nouvelle_cle,)).fetchone():
+                        nouvelle_cle = f"{base_cle}_{n}"; n += 1
+                    ordre_max = db.execute("SELECT COALESCE(MAX(ordre),0) FROM categories").fetchone()[0]
+                    db.execute(
+                        "INSERT INTO categories (cle, nom_fr, nom_ar, nom_en, icon, ordre) VALUES (?,?,?,?,?,?)",
+                        (nouvelle_cle, p.get('categorie_nom_fr', ''), p.get('categorie_nom_ar', ''),
+                         p.get('categorie_nom_en', ''), p.get('categorie_icon', '📦'), ordre_max + 1)
+                    )
+                    categorie_cache[cle_export] = nouvelle_cle
+                    nb_categories_creees += 1
+
+        vraie_cle = categorie_cache[cle_export]
+        existe_prod = db.execute(
+            "SELECT id FROM produits WHERE (nom_fr=? OR nom_ar=?) AND categorie=? AND actif=1",
+            (p.get('nom_fr', ''), p.get('nom_ar', ''), vraie_cle)
+        ).fetchone()
+        if existe_prod:
+            continue
+
+        db.execute(
+            """INSERT INTO produits (nom_fr, nom_ar, nom_en, categorie, dimension, unite, prix_achat_kg, prix_vente_kg, actif)
+               VALUES (?,?,?,?,?,'kg',0,0,1)""",
+            (p.get('nom_fr', ''), p.get('nom_ar', ''), p.get('nom_en', ''), vraie_cle, p.get('dimension', ''))
+        )
+        nb_produits_crees += 1
+
+    for o in operations:
+        existe_op = db.execute(
+            "SELECT id FROM operations WHERE (nom_fr=? OR nom_ar=?) AND actif=1",
+            (o.get('nom_fr', ''), o.get('nom_ar', ''))
+        ).fetchone()
+        if existe_op:
+            continue
+        db.execute(
+            "INSERT INTO operations (nom_fr, nom_ar, nom_en, prix_unitaire, unite, actif) VALUES (?,?,?,0,'unité',1)",
+            (o.get('nom_fr', ''), o.get('nom_ar', ''), o.get('nom_en', ''))
+        )
+        nb_operations_creees += 1
+
+    db.commit(); db.close()
+    return jsonify({
+        'ok': True, 'mode': mode,
+        'nb_categories_creees': nb_categories_creees,
+        'nb_produits_crees': nb_produits_crees,
+        'nb_operations_creees': nb_operations_creees
+    })
+
 @api.route('/produits', methods=['POST'])
 def add_produit():
     data = request.json
